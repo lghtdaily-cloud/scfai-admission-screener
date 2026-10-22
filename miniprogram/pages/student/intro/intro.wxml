@@ -1,0 +1,51 @@
+<view class="container">
+  <view class="hero card">
+    <view class="hero-title">艺术与文旅产业融合创新设计微专业</view>
+    <view class="hero-sub">四川美术学院实验艺术学院 · 招生报名</view>
+  </view>
+
+  <!-- 项目滑动切换 -->
+  <view class="card">
+    <view class="title">选择你要报名的项目</view>
+    <view class="subtitle">左右滑动卡片切换，点「我要报名此项目」进入报名。</view>
+    <swiper class="proj-swiper" current="{{current}}" bindchange="onSwiper" previous-margin="24rpx" next-margin="24rpx">
+      <swiper-item wx:for="{{projects}}" wx:key="id">
+        <view class="proj">
+          <view class="proj-org">{{item.org}}</view>
+          <view class="proj-title">{{item.title}}</view>
+          <view class="proj-desc">{{item.desc}}</view>
+          <view class="proj-tags">
+            <text class="tag" wx:for="{{item.tags}}" wx:for-item="t" wx:key="*this">{{t}}</text>
+          </view>
+          <view class="proj-meta">
+            <text class="proj-dl">📅 截止 {{item.deadline}}</text>
+          </view>
+          <view class="proj-reqs">
+            <text class="proj-req-h">需提交：</text>
+            <block wx:for="{{item.reqs}}" wx:for-item="r" wx:key="*this"><text class="proj-req">{{r}}</text></block>
+          </view>
+          <button class="btn btn-primary btn-block" data-i="{{index}}" bindtap="chooseProject">我要报名此项目</button>
+        </view>
+      </swiper-item>
+    </swiper>
+    <view class="dots">
+      <view class="dot {{current===idx ? 'on' : ''}}" wx:for="{{projects}}" wx:for-index="idx" wx:key="id"></view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="title">报名须知</view>
+    <view class="summary" wx:for="{{summary}}" wx:key="t">
+      <view class="summary-t">{{item.t}}</view>
+      <view class="summary-d">{{item.d}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="title">完整招生简章</view>
+    <view class="subtitle">点击下方按钮复制公众号文章链接，在微信中打开查看详情。</view>
+    <button class="btn btn-ghost btn-block" bindtap="copyLink">复制招生简章链接</button>
+  </view>
+
+  <button class="btn btn-primary btn-block" bindtap="goApply">直接去报名（不选特定项目）</button>
+</view>

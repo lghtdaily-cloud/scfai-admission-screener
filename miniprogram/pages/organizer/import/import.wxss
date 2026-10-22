@@ -1,0 +1,24 @@
+.seg { display: flex; background: #f3f4f6; border-radius: 16rpx; padding: 6rpx; margin-bottom: 24rpx; }
+.seg-item { flex: 1; text-align: center; padding: 16rpx 0; font-size: 28rpx; color: var(--muted); border-radius: 12rpx; }
+.seg-item.on { background: #fff; color: var(--primary); font-weight: 600; box-shadow: 0 2rpx 8rpx rgba(0,0,0,.06); }
+
+.picker { display: flex; align-items: center; padding: 28rpx; background: #f9fafb; border: 2rpx dashed #d1d5db; border-radius: 16rpx; margin-bottom: 20rpx; }
+.picker-icon { font-size: 40rpx; margin-right: 16rpx; }
+.picker-text { font-size: 28rpx; color: var(--muted); }
+
+.file-item { font-size: 26rpx; color: var(--muted); padding: 8rpx 0; }
+.tip { margin-top: 20rpx; font-size: 24rpx; color: var(--muted); line-height: 1.7; white-space: pre-wrap; background: #f9fafb; padding: 20rpx; border-radius: 14rpx; }
+
+.stats-row { display: flex; justify-content: space-between; margin-bottom: 8rpx; }
+.mini { flex: 1; text-align: center; }
+.mini-n { font-size: 40rpx; font-weight: 700; }
+.mini-n.ok { color: var(--success); }
+.mini-n.warn { color: var(--warning); }
+.mini-l { font-size: 22rpx; color: var(--muted); }
+
+.applicant { padding: 20rpx 0; border-bottom: 2rpx solid #f3f4f6; }
+.ap-name { font-size: 30rpx; font-weight: 600; }
+.ap-line { font-size: 24rpx; margin-top: 6rpx; }
+
+.row-btns { display: flex; gap: 20rpx; margin-top: 24rpx; }
+.flex1 { flex: 1; }

@@ -1,0 +1,71 @@
+<view class="container">
+  <view class="sel-banner" wx:if="{{selProject}}">
+    <view class="sel-banner-h">已选项目</view>
+    <view class="sel-banner-t">{{selProject.title}}</view>
+    <view class="sel-banner-o">{{selProject.org}} · 截止 {{selProject.deadline}}</view>
+  </view>
+  <view class="card">
+    <view class="title">一、基本信息</view>
+    <view class="field" wx:for="{{basic}}" wx:key="key">
+      <view class="field-label">{{item.label}}<text wx:if="{{item.required}}" style="color:#dc2626"> *</text></view>
+
+      <block wx:if="{{item.type==='radio'}}">
+        <view class="opts">
+          <view class="opt {{form.gender===opt ? 'opt-on' : ''}}" wx:for="{{item.options}}" wx:for-item="opt" wx:key="*this" data-val="{{opt}}" bindtap="onGender">{{opt}}</view>
+        </view>
+      </block>
+
+      <block wx:elif="{{item.type==='textarea'}}">
+        <textarea class="field-textarea" placeholder="{{item.placeholder||''}}" value="{{form[item.key]}}" data-key="{{item.key}}" bindinput="onBasicInput"></textarea>
+      </block>
+
+      <block wx:else>
+        <input class="field-input" placeholder="{{item.placeholder||''}}" value="{{form[item.key]}}" data-key="{{item.key}}" bindinput="onBasicInput" />
+      </block>
+    </view>
+
+    <view class="field">
+      <view class="field-label">微信号（选填，便于主办方加好友）</view>
+      <input class="field-input" placeholder="用于一键联系加好友" value="{{form.wechat}}" data-key="wechat" bindinput="onBasicInput" />
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="title">二、专业能力与技能<text class="muted" style="font-weight:400">（可多选）</text></view>
+    <view class="opts">
+      <view class="opt {{skillsSel.indexOf(opt)>=0 ? 'opt-on' : ''}}" wx:for="{{skills}}" wx:for-item="opt" wx:key="*this" data-group="skills" data-val="{{opt}}" bindtap="toggle">{{opt}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="title">三、期望提升方向<text class="muted" style="font-weight:400">（可多选）</text></view>
+    <view class="opts">
+      <view class="opt {{improveSel.indexOf(opt)>=0 ? 'opt-on' : ''}}" wx:for="{{improve}}" wx:for-item="opt" wx:key="*this" data-group="improve" data-val="{{opt}}" bindtap="toggle">{{opt}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="title">四、希望承担工作<text class="muted" style="font-weight:400">（可多选）</text></view>
+    <view class="opts">
+      <view class="opt {{workSel.indexOf(opt)>=0 ? 'opt-on' : ''}}" wx:for="{{work}}" wx:for-item="opt" wx:key="*this" data-group="work" data-val="{{opt}}" bindtap="toggle">{{opt}}</view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="title">五、上传材料</view>
+    <view class="subtitle">支持 PDF / Word / 图片，从聊天中选取文件上传。</view>
+    <view class="file-row" wx:for="{{fileTypes}}" wx:key="key">
+      <view class="file-info">
+        <view class="file-label">{{item.label}}<text wx:if="{{item.required}}" style="color:#dc2626"> *</text></view>
+        <view class="file-name">{{files[item.key].name || '未选择' + (item.note ? '（'+item.note+'）' : '')}}</view>
+      </view>
+      <view class="file-btns">
+        <button class="mini-btn" size="mini" data-key="{{item.key}}" bindtap="chooseFile">选择</button>
+        <button class="mini-btn danger" size="mini" wx:if="{{files[item.key]}}" data-key="{{item.key}}" bindtap="removeFile">移除</button>
+      </view>
+    </view>
+  </view>
+
+  <button class="btn btn-primary btn-block" loading="{{submitting}}" bindtap="submit">提交报名</button>
+  <view class="subtitle" style="text-align:center;margin-top:16rpx">提交后可在「提交状态」查看进度</view>
+</view>

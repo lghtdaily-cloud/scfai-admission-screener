@@ -1,0 +1,10 @@
+{
+  "name": "importMail",
+  "version": "1.0.0",
+  "description": "邮件导入：压缩包解压、按人归档、材料缺失标记",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "adm-zip": "~0.5.10"
+  }
+}

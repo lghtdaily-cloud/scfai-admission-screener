@@ -1,0 +1,12 @@
+{
+  "name": "申请人筛选与一键联系",
+  "short_name": "申请人筛选",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f7f9",
+  "theme_color": "#6d5efc",
+  "lang": "zh-CN",
+  "description": "收材料 → 智能筛选 → 一键联系，全流程离线可用"
+}

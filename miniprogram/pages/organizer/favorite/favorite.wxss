@@ -1,0 +1,4 @@
+.can { padding: 24rpx 28rpx; }
+.can:active { background: #fafbfc; }
+.can-name { font-weight: 600; font-size: 30rpx; }
+.can-sub { margin: 6rpx 0 10rpx; }

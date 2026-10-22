@@ -1,0 +1,14 @@
+/* 报名页复用全局 .field / .opts / .file-row 样式 */
+.file-row { padding: 22rpx 0; }
+
+/* 已选项目横幅 */
+.sel-banner {
+  background: linear-gradient(135deg, #6d5efc 0%, #8b7dff 100%);
+  border-radius: var(--radius);
+  padding: 26rpx 28rpx;
+  margin-bottom: 20rpx;
+  color: #fff;
+}
+.sel-banner-h { font-size: 22rpx; opacity: .85; }
+.sel-banner-t { font-size: 31rpx; font-weight: 700; line-height: 1.4; margin-top: 6rpx; }
+.sel-banner-o { font-size: 23rpx; opacity: .85; margin-top: 8rpx; }

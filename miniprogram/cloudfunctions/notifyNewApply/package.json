@@ -1,0 +1,9 @@
+{
+  "name": "notifyNewApply",
+  "version": "1.0.0",
+  "description": "新报名订阅消息推送（主办方授权 + 推送）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

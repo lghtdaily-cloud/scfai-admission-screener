@@ -1,0 +1,12 @@
+{
+  "name": "scfai-auto-fetch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "四川美术学院 / 重庆艺术类活动每日自动检索与入库",
+  "main": "run.js",
+  "scripts": {
+    "fetch": "node run.js --days=1 --max=12",
+    "preview": "node run.js --days=3 --max=12 --dry-run",
+    "merge-web": "node merge-web.js"
+  }
+}

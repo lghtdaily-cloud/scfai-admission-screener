@@ -1,0 +1,60 @@
+<view class="container" wx:if="{{c}}">
+  <view class="card">
+    <view class="row">
+      <view class="title" style="margin:0">{{c.name}}</view>
+      <text class="tag {{c.favorite ? 'tag-success' : 'tag-muted'}}">{{c.favorite ? '⭐心仪' : ''}}</text>
+    </view>
+    <view class="divider"></view>
+    <view class="kv"><text class="muted">学号</text><text>{{c.studentId || '-'}}</text></view>
+    <view class="kv"><text class="muted">性别 / 年龄</text><text>{{c.gender || '-'}} / {{c.age || '-'}}</text></view>
+    <view class="kv"><text class="muted">年级 / 专业</text><text>{{c.grade || '-'}} / {{c.major || '-'}}</text></view>
+    <view class="kv"><text class="muted">邮箱</text><text>{{c.email || '-'}}</text></view>
+    <view class="kv"><text class="muted">手机号</text><text>{{maskedPhone || '-'}}</text></view>
+    <view class="kv"><text class="muted">微信号</text><text>{{c.wechat || '未提供'}}</text></view>
+    <view class="kv"><text class="muted">来源</text><text>{{c.source === 'mail' ? '邮件导入' : '小程序直传'}}</text></view>
+  </view>
+
+  <view class="card">
+    <view class="title">特长与优势</view>
+    <view class="txt">{{c.strengths || '—'}}</view>
+    <view class="title" style="margin-top:16rpx">奖项 / 成果</view>
+    <view class="txt">{{c.awards || '—'}}</view>
+  </view>
+
+  <view class="card">
+    <view class="title">技能 / 意愿</view>
+    <view><text class="muted">专业能力：</text><text class="tag" wx:for="{{c.skills}}" wx:key="*this">{{item}}</text></view>
+    <view style="margin-top:12rpx"><text class="muted">提升方向：</text><text class="tag" wx:for="{{c.improve}}" wx:key="*this">{{item}}</text></view>
+    <view style="margin-top:12rpx"><text class="muted">承担工作：</text><text class="tag" wx:for="{{c.work}}" wx:key="*this">{{item}}</text></view>
+  </view>
+
+  <view class="card">
+    <view class="title">材料</view>
+    <view class="file" wx:for="{{fileList}}" wx:key="key">
+      <text class="file-l">{{item.label}}</text>
+      <text class="file-s {{item.fileID ? 'ok' : 'no'}}">{{item.isOnline ? '在线填写' : (item.fileID ? '已上传' : '缺失')}}</text>
+      <text class="file-open" wx:if="{{item.fileID && !item.isOnline}}" data-id="{{item.fileID}}" bindtap="openFile">查看</text>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{c.portfolioOverview}}">
+    <view class="title">作品集解析</view>
+    <view class="kv"><text class="muted">类别</text><text>{{c.portfolioOverview.category || '—'}}</text></view>
+    <view class="kv"><text class="muted">风格</text><text>{{c.portfolioOverview.style || '—'}}</text></view>
+    <view class="kv"><text class="muted">优势</text><text>{{c.portfolioOverview.advantage || '—'}}</text></view>
+    <view class="kv" wx:if="{{c.portfolioOverview.weakness}}"><text class="muted">短板</text><text>{{c.portfolioOverview.weakness}}</text></view>
+  </view>
+
+  <view class="card" wx:if="{{c.screen}}">
+    <view class="row">
+      <view class="title" style="margin:0">初筛结果</view>
+      <text class="tag {{c.screen.tier==='推荐' ? 'tag-success' : (c.screen.tier==='待定' ? 'tag-warning' : 'tag-danger')}}">{{c.screen.tier}}{{c.screen.fallback ? '（兜底）' : ''}}</text>
+    </view>
+    <view class="subtitle" style="margin-top:12rpx">理由：{{c.screen.reason || c.screen.fallbackReason || '—'}}</view>
+  </view>
+
+  <view class="row">
+    <button class="btn btn-line btn-flex" style="margin-right:16rpx" bindtap="toggleFav">{{c.favorite ? '取消心仪' : '标记心仪'}}</button>
+    <button class="btn btn-primary btn-flex" bindtap="contact">一键联系</button>
+  </view>
+</view>

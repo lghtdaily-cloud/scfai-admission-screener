@@ -1,0 +1,24 @@
+.preview {
+  background: #fafbfc;
+  border: 1rpx solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 24rpx;
+  font-size: 26rpx;
+  color: var(--text-2);
+  line-height: 1.8;
+  white-space: pre-wrap;
+  margin-bottom: 12rpx;
+}
+
+.ch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid var(--line);
+}
+.ch:last-child { border-bottom: none; }
+.ch-l { flex: 1; min-width: 0; }
+.ch-t { font-size: 28rpx; font-weight: 500; }
+.ch-d { font-size: 24rpx; color: var(--muted); margin-top: 4rpx; }
+.ch-btns { display: flex; flex: none; }

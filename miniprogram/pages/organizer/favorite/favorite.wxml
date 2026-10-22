@@ -1,0 +1,25 @@
+<view class="container">
+  <view class="card">
+    <view class="title">心仪候选者（{{list.length}}）</view>
+    <view class="subtitle">独立成组，优先约面与录取。</view>
+    <button class="btn btn-ghost btn-block" bindtap="exportFav">导出心仪名单 (xlsx)</button>
+  </view>
+
+  <view class="empty" wx:if="{{list.length===0}}">尚未标记心仪候选者。在候选人详情点击「标记心仪」。</view>
+
+  <view class="card can" wx:for="{{list}}" wx:key="_id" data-id="{{item._id}}" bindtap="tap">
+    <view class="row">
+      <view class="can-name">{{item.name}}</view>
+      <text class="tag {{item.screen.tier==='推荐' ? 'tag-success' : (item.screen.tier==='待定' ? 'tag-warning' : 'tag-muted')}}">{{item.screen ? item.screen.tier : '未筛选'}}</text>
+    </view>
+    <view class="subtitle can-sub">{{item.major || '-'}} · {{item.grade || '-'}}</view>
+  </view>
+
+  <view class="card" wx:if="{{files.length}}">
+    <view class="title">已生成文件</view>
+    <view class="file" wx:for="{{files}}" wx:key="fileID" data-id="{{item.fileID}}" bindtap="openFile">
+      <text class="file-l">{{item.name}}</text>
+      <text class="file-open">查看</text>
+    </view>
+  </view>
+</view>

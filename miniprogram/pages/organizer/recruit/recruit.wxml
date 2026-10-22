@@ -1,0 +1,60 @@
+<view class="container">
+  <view class="card">
+    <view class="title">① 招募信息</view>
+    <view class="subtitle">粘贴公众号招募信息文本，或一键载入样例。</view>
+    <textarea class="field-textarea" style="height:220rpx" value="{{text}}" bindinput="onText" placeholder="粘贴招生简章全文…"></textarea>
+    <view class="row" style="margin-top:12rpx">
+      <button class="btn btn-ghost" size="mini" bindtap="loadSample">载入川美样例</button>
+      <button class="btn btn-primary" size="mini" bindtap="parse">解析筛选标准</button>
+    </view>
+  </view>
+
+  <block wx:if="{{parsed && criteria}}">
+    <view class="card">
+      <view class="title">② 筛选标准（三张清单，可编辑）</view>
+
+      <view class="block">
+        <view class="block-t">硬条件（不满足直接淘汰）</view>
+        <view wx:for="{{criteria.hard}}" wx:key="index" class="li">
+          <input class="li-input" value="{{item}}" data-group="hard" data-idx="{{index}}" bindinput="onListInput" />
+          <text class="li-del" data-group="hard" data-idx="{{index}}" bindtap="delItem">✕</text>
+        </view>
+        <view class="li-add" data-group="hard" bindtap="addItem">+ 新增硬条件</view>
+      </view>
+
+      <view class="block">
+        <view class="block-t">加分项（有则优先）</view>
+        <view wx:for="{{criteria.bonus}}" wx:key="index" class="li">
+          <input class="li-input" value="{{item}}" data-group="bonus" data-idx="{{index}}" bindinput="onListInput" />
+          <text class="li-del" data-group="bonus" data-idx="{{index}}" bindtap="delItem">✕</text>
+        </view>
+        <view class="li-add" data-group="bonus" bindtap="addItem">+ 新增加分项</view>
+      </view>
+
+      <view class="block">
+        <view class="block-t">排除项（出现即淘汰）</view>
+        <view wx:for="{{criteria.exclude}}" wx:key="index" class="li">
+          <input class="li-input" value="{{item}}" data-group="exclude" data-idx="{{index}}" bindinput="onListInput" />
+          <text class="li-del" data-group="exclude" data-idx="{{index}}" bindtap="delItem">✕</text>
+        </view>
+        <view class="li-add" data-group="exclude" bindtap="addItem">+ 新增排除项</view>
+      </view>
+
+      <view class="block">
+        <view class="block-t">最少录取人数</view>
+        <input class="field-input" type="number" value="{{criteria.minAdmit}}" bindinput="onMin" />
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="title">③ 报名表字段映射</view>
+      <view class="subtitle">系统已自动识别《报名申请表》字段，学生端在线表单据此生成。</view>
+      <view class="map-grp">基本信息：{{basics.length}} 项（姓名/学号/年龄/性别/年级/专业/邮箱/手机号/特长优势/奖项成果）</view>
+      <view class="map-grp">专业能力技能：{{skills.length}} 项多选</view>
+      <view class="map-grp">期望提升方向：{{improve.length}} 项多选</view>
+      <view class="map-grp">希望承担工作：{{work.length}} 项多选</view>
+    </view>
+
+    <button class="btn btn-primary btn-block" loading="{{saving}}" bindtap="save">保存招募配置</button>
+  </block>
+</view>

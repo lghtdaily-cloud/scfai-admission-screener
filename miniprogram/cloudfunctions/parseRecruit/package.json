@@ -1,0 +1,9 @@
+{
+  "name": "parseRecruit",
+  "version": "1.0.0",
+  "description": "解析招募信息生成三张清单与最少录取人数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "parseFormTpl",
+  "version": "1.0.0",
+  "description": "识别报名表模板字段",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

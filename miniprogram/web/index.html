@@ -1,0 +1,3294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>申请人筛选与一键联系</title>
+<meta name="theme-color" content="#6d5efc" />
+<link rel="manifest" href="manifest.webmanifest" />
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --primary:#6d5efc; --primary-2:#8b7dff; --primary-soft:#f2f0ff;
+    --cyan:#06b6d4; --cyan-2:#22d3ee; --cyan-deep:#0e7490; --cyan-soft:#e6fbfd;
+    --grad:linear-gradient(120deg,#6d5efc 0%,#7c6cff 38%,#22d3ee 130%);
+    --success:#16a34a; --success-soft:#e8f7ee;
+    --warning:#d97706; --warning-soft:#fdf3e3;
+    --danger:#dc2626; --danger-soft:#fdecec;
+    --text:#1c1f26; --text-2:#4b5563; --muted:#9aa1ad;
+    --line:#eef0f3; --bg:#f6f7f9; --card:#fff;
+    --radius:14px; --radius-sm:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei","Helvetica Neue",Helvetica,sans-serif;
+    font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+  header{background:var(--grad);color:#fff;padding:20px 24px;position:relative}
+  header h1{margin:0;font-size:19px;font-weight:700;letter-spacing:.5px}
+  header p{margin:4px 0 0;font-size:13px;opacity:.9}
+  .tabs{display:flex;gap:6px;background:rgba(255,255,255,.18);padding:4px;border-radius:12px;margin-top:14px;width:fit-content}
+  .tab{padding:7px 18px;border-radius:9px;cursor:pointer;font-size:14px;font-weight:500}
+  .tab.on{background:#fff;color:var(--primary);font-weight:600}
+  main{max-width:1080px;margin:0 auto;padding:20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:20px;margin-bottom:16px;box-shadow:0 1px 2px rgba(16,24,40,.03)}
+  .card-bar{background:var(--grad);height:3px;border-radius:14px 14px 0 0;margin:-20px -20px 16px}
+  h2{font-size:16px;font-weight:600;margin:0 0 4px}
+  .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+  label{display:block;font-size:13px;color:var(--text-2);margin-bottom:5px;font-weight:500}
+  input,textarea,select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:var(--radius-sm);
+    background:#fafbfc;font-size:14px;font-family:inherit;color:var(--text)}
+  input:focus,textarea:focus{outline:none;border-color:var(--cyan);background:#fff;box-shadow:0 0 0 3px rgba(34,211,238,.12)}
+  textarea{resize:vertical;min-height:88px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;
+    border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-primary{background:linear-gradient(120deg,#6d5efc,#8b7dff);color:#fff}
+  .btn-cyan{background:linear-gradient(120deg,#06b6d4,#22d3ee);color:#fff}
+  .btn-c{background:var(--cyan-soft);color:var(--cyan-deep)}
+  .btn-ghost{background:var(--primary-soft);color:var(--primary)}
+  .btn-line{background:#fff;color:var(--primary);border:1px solid var(--primary)}
+  .btn-sm{padding:5px 12px;font-size:13px;border-radius:8px}
+  .btn.rec{box-shadow:0 0 0 4px rgba(220,38,38,.18)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{padding:6px 14px;border-radius:999px;background:#f4f5f7;color:var(--text-2);
+    font-size:13px;cursor:pointer;border:1px solid transparent;user-select:none;transition:.15s}
+  .chip:hover{border-color:var(--cyan-2)}
+  .chip.on{background:var(--primary-soft);color:var(--primary);border-color:var(--primary);font-weight:500}
+  .chip.on.auto{background:var(--cyan-soft);color:var(--cyan-deep);border-color:var(--cyan)}
+  .tag{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;
+    background:var(--cyan-soft);color:var(--cyan-deep)}
+  .tag-purple{background:var(--primary-soft);color:var(--primary)}
+  .tag-ok{background:var(--success-soft);color:var(--success)}
+  .tag-warn{background:var(--warning-soft);color:var(--warning)}
+  .tag-err{background:var(--danger-soft);color:var(--danger)}
+  .tag-mute{background:#f3f5f7;color:var(--muted)}
+  .stats{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+  .stat{flex:1;min-width:88px;text-align:center;padding:12px 6px;background:#fafbfc;border-radius:var(--radius-sm);
+    border-top:2px solid var(--cyan-2)}
+  .stat b{display:block;font-size:24px;font-weight:700;line-height:1.2;color:var(--primary)}
+  .stat span{font-size:12px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{padding:10px 8px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:500;font-size:12.5px}
+  tbody tr:hover{background:#fafbfc}
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .kv:last-child{border-bottom:none}
+  .kv span:first-child{color:var(--muted);flex:none;width:110px;font-size:13px}
+  .empty{text-align:center;color:var(--muted);padding:28px 0;font-size:13.5px}
+  .muted{color:var(--muted)}
+  .log{font-size:13px;color:var(--warning);padding:4px 0}
+  .list-item{padding:14px 0;border-bottom:1px solid var(--line)}
+  .qadv{margin-top:8px;font-size:13px;line-height:1.7;color:#14663c}
+  .qadv>div::before{content:'★ '}
+  .qweak{margin-top:6px;font-size:13px;line-height:1.7;color:#9b1c1c}
+  .qweak>div::before{content:'☆ '}
+  .rubric{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px}
+  .qbar{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12.5px}
+  .qbar .qt{width:96px;flex:none;color:var(--muted)}
+  .qbar .qg{flex:1;height:8px;border-radius:6px;background:var(--line);overflow:hidden}
+  .qbar .qf{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--cyan))}
+  .qbar .qv{width:52px;flex:none;text-align:right;font-variant-numeric:tabular-nums}
+  .list-item:last-child{border-bottom:none}
+  .filebox{border:1.5px dashed #d7dbe2;border-radius:var(--radius-sm);padding:16px;text-align:center;
+    color:var(--muted);font-size:13.5px;cursor:pointer;background:#fafbfc}
+  .filebox:hover{border-color:var(--cyan);color:var(--cyan-deep);background:var(--cyan-soft)}
+  .filerow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+  .filerow:last-child{border-bottom:none}
+  .hide{display:none}
+  .toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%);background:rgba(28,31,38,.94);
+    color:#fff;padding:10px 20px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:99}
+  .toast.on{opacity:1}
+  details summary{cursor:pointer;font-size:14px;font-weight:500;padding:6px 0}
+  /* —— 语音 / 智能填表 —— */
+  .field{position:relative}
+  .mic{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:26px;height:26px;
+    border:none;border-radius:50%;background:var(--cyan-soft);color:var(--cyan-deep);
+    font-size:13px;line-height:26px;text-align:center;cursor:pointer;padding:0}
+  .mic:hover{background:var(--cyan);color:#fff}
+  .mic.on{background:var(--danger);color:#fff;animation:pulse 1.1s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4)}50%{box-shadow:0 0 0 7px rgba(220,38,38,0)}}
+  .banner{padding:11px 14px;border-radius:var(--radius-sm);font-size:13.5px;margin-bottom:14px;
+    border:1px solid var(--line);background:#fafbfc}
+  .banner.ok{background:var(--success-soft);border-color:#bfe6cd;color:#14663c}
+  .banner.warn{background:var(--warning-soft);border-color:#f3dcb0;color:#8a5a08}
+  .banner.err{background:var(--danger-soft);border-color:#f5c6c6;color:#9b1c1c}
+  .banner.info{background:var(--cyan-soft);border-color:#b6ecf5;color:var(--cyan-deep)}
+  .hl{background:linear-gradient(180deg,transparent 62%,#cffafe 62%);padding:0 2px}
+  /* —— 存储诊断 / 同步 —— */
+  .diag{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:10px}
+  .diag div{background:#fafbfc;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 12px;font-size:13px}
+  .diag b{display:block;font-size:15px;color:var(--cyan-deep);font-weight:700;margin-top:2px;word-break:break-all}
+  .code{width:100%;font-family:ui-monospace,Consolas,monospace;font-size:12px;min-height:70px;
+    background:#fafbfc;border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 11px;word-break:break-all}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--success);margin-right:6px}
+  .dot.off{background:var(--muted)}
+  .savebar{position:fixed;right:18px;bottom:22px;font-size:12px;color:var(--muted);
+    background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 14px;
+    box-shadow:0 1px 6px rgba(16,24,40,.06);opacity:0;transition:.3s;pointer-events:none;z-index:98}
+  .savebar.on{opacity:1}
+  .reason{font-size:12.5px;color:var(--text-2);margin-top:4px;line-height:1.6}
+  /* —— 项目首页 —— */
+  .searchbar{display:flex;gap:8px;align-items:center}
+  .searchbar input{flex:1}
+  .hero{position:relative;overflow:hidden;border-radius:var(--radius);background:#0f172a;margin-bottom:16px;
+    box-shadow:0 2px 10px rgba(16,24,40,.08)}
+  .hero-track{display:flex;transition:transform .35s cubic-bezier(.22,.61,.36,1);touch-action:pan-y}
+  .hero-slide{min-width:100%;position:relative;height:250px;background:#111827;cursor:pointer;user-select:none}
+  .hero-slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;-webkit-user-drag:none}
+  .hero-ph{position:absolute;inset:0;background:var(--grad);display:flex;flex-direction:column;
+    justify-content:flex-end;padding:24px;color:#fff}
+  .hero-ph .big{font-size:22px;font-weight:700;line-height:1.35}
+  .hero-ph .org{font-size:13px;opacity:.9;margin-top:6px}
+  .hero-cap{position:absolute;left:0;right:0;bottom:0;padding:20px 22px;color:#fff;
+    background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.75))}
+  .hero-cap .t{font-size:18px;font-weight:700;line-height:1.35;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+  .hero-cap .m{font-size:12.5px;opacity:.94;margin-top:4px}
+  .hero-dots{position:absolute;right:16px;bottom:16px;display:flex;gap:6px}
+  .hero-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.5)}
+  .hero-dot.on{background:#fff;width:20px;border-radius:4px}
+  .hero-nav{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;
+    background:rgba(0,0,0,.32);color:#fff;border:none;font-size:20px;line-height:36px;cursor:pointer;padding:0}
+  .hero-prev{left:10px} .hero-next{right:10px}
+  .gridp{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .pcard{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:#fff;
+    display:flex;flex-direction:column;transition:.18s;cursor:pointer}
+  .pcard:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(16,24,40,.12);border-color:var(--cyan-2)}
+  .pcard:active{transform:scale(.985)}
+  .pcard .cover{height:180px;position:relative;color:#fff;background:var(--grad)}
+  .pcard .cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .pcard .cover .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:16px;font-weight:700;padding:16px;text-align:center;line-height:1.45;color:#fff}
+  .pcard .body{padding:14px 15px 15px;display:flex;flex-direction:column;gap:7px;flex:1}
+  .pcard .t{font-weight:700;font-size:16px;line-height:1.45}
+  .pcard .m{font-size:12.5px;color:var(--muted)}
+  .pcard .req{font-size:12px;color:var(--text-2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .ddl{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;
+    background:var(--cyan-soft);color:var(--cyan-deep)}
+  .ddl.hot{background:var(--danger-soft);color:var(--danger)}
+  .ddl.over{background:#f1f3f5;color:var(--muted)}
+  .pcard .acts{display:flex;gap:8px;margin-top:auto;padding-top:8px}
+  .pcard .acts .btn{flex:1;padding:8px 6px;font-size:13px}
+  .dyn{border-left:3px solid var(--cyan);padding:2px 0 2px 12px;margin:16px 0 0}
+  .matreq{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .matreq .mchip{padding:5px 12px;border-radius:999px;font-size:12.5px;background:#f4f5f7;color:var(--text-2)}
+  .matreq .mchip.must{background:var(--warning-soft);color:#8a5a08}
+  .matreq .mchip.got{background:var(--success-soft);color:#14663c}
+  .apbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  /* —— 子导航（三栏） —— */
+  .subnav{display:flex;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px;margin-bottom:16px;position:sticky;top:0;z-index:20}
+  .subtab{padding:10px 14px;border-radius:9px;cursor:pointer;font-size:14px;font-weight:500;color:var(--text-2);flex:1;text-align:center;transition:.15s}
+  .subtab:hover{color:var(--primary)}
+  .subtab.on{background:var(--grad);color:#fff;font-weight:600}
+  @media(max-width:640px){
+    .gridp{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;
+      padding:2px 0 10px;-webkit-overflow-scrolling:touch}
+    .gridp::-webkit-scrollbar{height:6px}
+    .gridp::-webkit-scrollbar-thumb{background:#dfe3ea;border-radius:3px}
+    .gridp>.pcard{flex:0 0 80%;min-width:236px;scroll-snap-align:start}
+    .hero-slide{height:210px}
+    .hero-nav{display:none}
+    .subtab{flex:none;padding:9px 10px;font-size:13px}
+  }
+  @media(max-width:600px){
+    header{padding:16px} main{padding:14px} .card{padding:16px}
+    .card-bar{margin:-16px -16px 14px}
+    table{font-size:12.5px} th,td{padding:8px 5px}
+    .tabs{width:100%} .tab{flex:1;text-align:center;padding:7px 6px;font-size:13.5px}
+  }
+  /* —— 大屏 / 全屏适配：放宽容器并放大板块，避免宽屏下内容过窄、留白过多 —— */
+  @media(min-width:1280px){
+    main{max-width:1200px;padding:26px}
+    .hero-slide{height:320px}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+    .gridp{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+    .pcard .cover{height:200px}
+    .card{padding:24px;margin-bottom:18px}
+    .card-bar{margin:-24px -24px 16px}
+    h2{font-size:18px}
+    body{font-size:15.5px}
+    .welcome{padding:18px 24px}
+  }
+  @media(min-width:1680px){
+    main{max-width:1520px;padding:32px}
+    .hero-slide{height:380px}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+    .gridp{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
+    .pcard .cover{height:220px}
+    .card{padding:28px;margin-bottom:20px}
+    .card-bar{margin:-28px -28px 18px}
+    h2{font-size:19px}
+    body{font-size:16px}
+    .welcome{padding:20px 28px}
+    .welcome h3{font-size:19px}
+    .welcome p{font-size:14px}
+  }
+  @media(min-width:2200px){
+    main{max-width:1880px;padding:40px}
+    .hero-slide{height:440px}
+  }
+  /* ===== 卡通插画与点击动画 ===== */
+  .btn{position:relative;overflow:hidden}
+  .ripple{position:absolute;border-radius:50%;transform:scale(0);background:rgba(255,255,255,.5);
+    pointer-events:none;animation:ripple .6s ease-out}
+  @keyframes ripple{to{transform:scale(2.6);opacity:0}}
+  .pcard{animation:cardIn .5s cubic-bezier(.22,.61,.36,1) both}
+  .list-item{animation:cardIn .45s cubic-bezier(.22,.61,.36,1) both}
+  @keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .view-in{animation:viewIn .35s ease both}
+  @keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .heart-beat{animation:heart .5s ease}
+  @keyframes heart{0%,100%{transform:scale(1)}30%{transform:scale(1.35)}60%{transform:scale(.9)}}
+  .floaty{animation:floaty 3s ease-in-out infinite}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  .welcome{display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:var(--radius);
+    background:linear-gradient(120deg,#f2f0ff,#e6fbfd);border:1px solid var(--line);margin-bottom:16px}
+  .welcome .wt{flex:1;min-width:0}
+  .welcome h3{margin:0 0 4px;font-size:17px;font-weight:700;color:#312e81}
+  .welcome p{margin:0;font-size:13px;color:var(--text-2)}
+  .welcome .wb{flex:none;width:92px;height:92px}
+  @media(max-width:520px){ .welcome .wb{display:none} }
+  .cover-illus{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--grad)}
+  .cover-illus svg{width:60%;height:60%}
+  .illus-empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 0 6px}
+  .illus-empty svg{width:150px;height:116px}
+  .illus-empty .et{font-size:14px;color:var(--text-2);text-align:center;line-height:1.6;max-width:320px}
+  .illus-ok{display:flex;justify-content:center;margin:2px 0 10px}
+  .illus-ok svg{width:92px;height:92px;animation:pop .5s cubic-bezier(.34,1.56,.64,1) both}
+  @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+  /* ===== 星星跳跃动画 ===== */
+  .star-burst{position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;z-index:300}
+  .star-burst i{position:absolute;font-size:18px;will-change:transform,opacity;animation:starJump .85s ease-out forwards}
+  @keyframes starJump{
+    0%{opacity:1;transform:translate(0,0) scale(1) rotate(0)}
+    100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3) rotate(200deg)}
+  }
+  /* ===== 首次进入 · 动画引导（onboarding） ===== */
+  .tour-catch{position:fixed;inset:0;z-index:500;background:transparent;cursor:pointer}
+  .tour-spot{position:fixed;z-index:501;pointer-events:none;border-radius:14px;background:transparent;
+    box-shadow:0 0 0 9999px rgba(10,14,26,.76), 0 0 0 2px rgba(255,255,255,.92) inset;
+    transition:left .36s cubic-bezier(.22,.61,.36,1),top .36s cubic-bezier(.22,.61,.36,1),
+      width .36s cubic-bezier(.22,.61,.36,1),height .36s cubic-bezier(.22,.61,.36,1)}
+  .tour-spot::after{content:'';position:absolute;inset:-7px;border-radius:20px;
+    border:2px solid rgba(255,255,255,.9);animation:tourPulse 1.9s ease-out infinite}
+  @keyframes tourPulse{0%{transform:scale(.98);opacity:.95}70%{transform:scale(1.07);opacity:0}100%{opacity:0}}
+  .tour-tip{position:fixed;z-index:502;width:min(330px,86vw);background:rgba(15,19,32,.95);
+    color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:16px 18px 14px;
+    box-shadow:0 20px 54px rgba(0,0,0,.5);animation:tourIn .34s ease both;
+    transition:left .36s cubic-bezier(.22,.61,.36,1),top .36s cubic-bezier(.22,.61,.36,1)}
+  @keyframes tourIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+  .tour-tip .tstep{font-size:11.5px;letter-spacing:1.5px;color:rgba(255,255,255,.55);margin-bottom:7px}
+  .tour-tip .tt{font-size:17px;font-weight:700;line-height:1.4;margin-bottom:7px}
+  .tour-tip .td{font-size:13.5px;line-height:1.7;color:rgba(255,255,255,.84)}
+  .tour-tip .tacts{display:flex;align-items:center;gap:8px;margin-top:15px}
+  .tour-tip .tacts .sp{flex:1}
+  .tour-tip .tbtn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.24);
+    border-radius:9px;padding:7px 15px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .tour-tip .tbtn:hover{background:rgba(255,255,255,.26)}
+  .tour-tip .tbtn.main{background:linear-gradient(120deg,#6d5efc,#22d3ee);border:none}
+  .tour-tip .tskip{background:none;border:none;color:rgba(255,255,255,.58);font-size:13px;cursor:pointer;
+    font-family:inherit;padding:6px 2px}
+  .tour-tip .tskip:hover{color:#fff}
+  .tour-caret{position:absolute;width:14px;height:14px;background:rgba(15,19,32,.95);transform:rotate(45deg)}
+  .tour-caret.up{top:-8px;left:50%;margin-left:-7px;border-left:1px solid rgba(255,255,255,.18);border-top:1px solid rgba(255,255,255,.18)}
+  .tour-caret.down{bottom:-8px;left:50%;margin-left:-7px;border-right:1px solid rgba(255,255,255,.18);border-bottom:1px solid rgba(255,255,255,.18)}
+  .tour-dots{display:flex;gap:6px;justify-content:center;margin-top:12px}
+  .tour-dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.28);cursor:pointer}
+  .tour-dots i.on{background:#fff;width:18px;border-radius:4px}
+  .tour-launch{position:absolute;right:22px;top:20px;z-index:30;background:rgba(255,255,255,.18);
+    color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:6px 14px;font-size:13px;
+    font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+  .tour-launch:hover{background:rgba(255,255,255,.32)}
+  @media(max-width:600px){ .tour-launch{right:12px;top:12px;padding:5px 11px;font-size:12px} }
+</style>
+</head>
+<body>
+<header>
+  <h1>申请人筛选与一键联系</h1>
+  <p>找项目 → 收材料 → 筛选 → 联系 全流程 · 适用于学术类 / 工作坊招募</p>
+  <div class="tabs">
+    <div class="tab on" data-view="projects">招募项目</div>
+    <div class="tab" data-view="student">学生报名</div>
+    <div class="tab" data-view="organizer">主办方</div>
+  </div>
+  <button class="tour-launch" id="btnTour" type="button">🛈 使用引导</button>
+</header>
+
+<main>
+<!-- ============ 项目首页 ============ -->
+<section id="view-projects">
+  <div class="welcome">
+    <div class="wt">
+      <h3>正在招募的项目</h3>
+      <p>按截止时间由近到远排列，越靠前越紧迫；过期项目默认隐藏，点「已截止」分类即可查看。点海报进入报名。</p>
+    </div>
+    <svg class="wb floaty" viewBox="0 0 92 92" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="46" cy="46" r="42" fill="#6d5efc" opacity=".12"/>
+      <rect x="24" y="20" width="44" height="54" rx="8" fill="#fff" stroke="#6d5efc" stroke-width="3"/>
+      <rect x="31" y="30" width="30" height="6" rx="3" fill="#22d3ee"/>
+      <rect x="31" y="42" width="30" height="6" rx="3" fill="#8b7dff"/>
+      <rect x="31" y="54" width="20" height="6" rx="3" fill="#06b6d4"/>
+      <circle cx="64" cy="22" r="12" fill="#fbbf24"/><text x="64" y="27" font-size="14" text-anchor="middle" fill="#fff" font-weight="700">招</text>
+    </svg>
+  </div>
+
+  <div class="card">
+    <div class="searchbar">
+      <input id="p-kw" placeholder="搜索项目名称 / 主办方 / 关键词" />
+      <button class="btn btn-primary btn-sm" id="btnSearch">搜索</button>
+    </div>
+    <div class="chips" id="p-filters" style="margin-top:10px"></div>
+  </div>
+
+  <div class="hero hide" id="hero">
+    <div class="hero-track" id="heroTrack"></div>
+    <div class="hero-dots" id="heroDots"></div>
+    <button class="hero-nav hero-prev" id="heroPrev" aria-label="上一张">‹</button>
+    <button class="hero-nav hero-next" id="heroNext" aria-label="下一张">›</button>
+  </div>
+
+  <div class="card">
+    <h2>正在招募 <span class="muted" style="font-weight:400" id="pCount"></span></h2>
+    <div class="sub">手机端左右滑动卡片 · 点「详情」跳转原文 · 点「报名」进入该项目的定制报名页</div>
+    <div class="gridp" id="pGrid"></div>
+    <div id="pEmpty" class="empty hide"></div>
+  </div>
+</section>
+
+<!-- ============ 学生端（三栏） ============ -->
+<section id="view-student" class="hide">
+  <div class="subnav" id="stuNav">
+    <div class="subtab on" data-sub="pick">① 项目选择与切换</div>
+    <div class="subtab" data-sub="fill">② 智能填表与上传材料</div>
+    <div class="subtab" data-sub="query">③ 报名查询</div>
+    <div class="subtab" data-sub="stuhelp">④ 使用教学</div>
+  </div>
+
+  <!-- ① 项目选择与切换 -->
+  <div id="sub-pick" data-subp="student">
+    <div class="card">
+      <div class="card-bar"></div>
+      <h2>一、选择报名项目</h2>
+      <div class="sub">在这里你<b>只需要做一件事：挑出你要报名的项目</b> ⭐ 选完会自动帮你解析招募要求，并跳到解析结果。</div>
+      <div class="banner info" style="margin-top:10px">
+        <b>✅ 主页里已经有的项目</b>：主办方早就上传好官方链接了，直接点卡片上的「选这个项目」就行，
+        <b>不需要你再上传微信链接</b>。
+      </div>
+      <div class="banner warn" style="margin-top:8px">
+        <b>⚠️ 只有主页里没有的项目</b>，才需要到最下面「二、主页里没有这个项目？」去粘贴公众号链接 —— 那一块是<b>选填</b>的。
+      </div>
+      <div id="projPicker" class="gridp" style="margin-top:12px"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn btn-line btn-sm" id="btnChangeProj">回首页切换项目</button>
+        <button class="btn btn-c btn-sm" id="btnOpenSrc">查看原文</button>
+      </div>
+    </div>
+
+    <!-- 选中项目后自动出现：项目信息 + 招募要求解析结果 -->
+    <div class="card hide" id="applyProjCard">
+      <div class="card-bar"></div>
+      <div class="apbar">
+        <div style="flex:1;min-width:200px">
+          <h2 id="apTitle">—</h2>
+          <div class="sub" id="apMeta" style="margin-bottom:0"></div>
+        </div>
+      </div>
+      <div id="apReqs"></div>
+      <div id="pickParseResult" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-bar"></div>
+      <h2>二、主页里没有这个项目？（选填）</h2>
+      <div class="sub">下面这块 <b>大多数同学不用碰</b> 🍵 只有当你要报名的项目 <b>不在上面的列表里</b> 时，
+        才在这里粘贴它的公众号链接或上传招募文件，再点「解析招募要求」。</div>
+      <button class="btn btn-line btn-sm" id="btnToggleCustom" style="margin-top:10px">主页里没有我要报的项目，我来上传链接</button>
+      <div class="hide" id="customProjBox" style="margin-top:12px">
+        <label>招募链接（微信公众号 / 招募网页）</label>
+        <div class="row">
+          <input id="stu-url" placeholder="https://mp.weixin.qq.com/s/..." style="flex:1;min-width:220px" />
+          <button class="btn btn-c btn-sm" id="btnFetchStuUrl" data-star>抓取链接正文</button>
+        </div>
+        <div id="stuUrlStat" class="muted" style="font-size:12.5px;margin-top:6px"></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn btn-cyan btn-sm" id="btnPickRecruitDoc" data-star>上传招募需求文件</button>
+          <button class="btn btn-line btn-sm" id="btnPasteRecruit">粘贴需求文本</button>
+          <span class="muted" style="font-size:12.5px">支持 .txt / .md / .docx</span>
+        </div>
+        <textarea id="recruitPaste" class="hide" style="margin-top:10px" placeholder="把招募需求全文粘贴到这里…"></textarea>
+        <div class="row hide" id="recruitPasteRow" style="margin-top:8px">
+          <button class="btn btn-primary btn-sm" id="btnApplyRecruit">确认粘贴文本</button>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn btn-primary" id="btnParseReq" data-star>解析招募要求</button>
+        </div>
+        <div id="recruitBrief" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 智能填表与上传材料 -->
+  <div id="sub-fill" class="hide" data-subp="student">
+    <div class="card">
+      <div class="card-bar"></div>
+      <h2>三、智能填表</h2>
+      <div class="sub">上传简历自动识别，或口述一段自我介绍由系统填表；识别结果请务必人工校对</div>
+      <div class="row">
+        <button class="btn btn-cyan btn-sm" id="btnResume" data-star>上传简历识别</button>
+        <button class="btn btn-primary btn-sm" id="btnVoiceAll">语音快速填表</button>
+        <button class="btn btn-line btn-sm" id="btnPasteResume">粘贴简历文本</button>
+      </div>
+      <div id="fillStat" class="muted" style="font-size:13px;margin-top:8px"></div>
+      <textarea id="resumePaste" class="hide" style="margin-top:10px" placeholder="把简历内容整段粘贴到这里…"></textarea>
+      <div class="row hide" id="resumePasteRow" style="margin-top:8px">
+        <button class="btn btn-primary btn-sm" id="btnApplyResume">识别并填充</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>四、基本信息</h2>
+      <div class="sub">带 * 为必填；点输入框右侧 🎤 可语音录入；手机号对外展示时自动脱敏</div>
+      <div class="grid">
+        <div><label>姓名 *</label><input id="f-name" placeholder="张三" /></div>
+        <div><label>学号 *</label><input id="f-studentId" placeholder="20230101" /></div>
+        <div><label>年龄</label><input id="f-age" type="number" placeholder="20" /></div>
+        <div><label>性别</label>
+          <select id="f-gender"><option value="">请选择</option><option>男</option><option>女</option></select>
+        </div>
+        <div><label>年级</label>
+          <select id="f-grade"><option value="">请选择</option><option>大一</option><option>大二</option><option>大三</option><option>大四</option><option>研一</option><option>研二</option><option>研三</option></select>
+        </div>
+        <div><label>专业</label><input id="f-major" placeholder="视觉传达设计" /></div>
+        <div><label>邮箱 *</label><input id="f-email" placeholder="xxx@qq.com" /></div>
+        <div><label>手机号 *</label><input id="f-phone" placeholder="13800000000" /></div>
+        <div><label>微信号</label><input id="f-wechat" placeholder="选填，便于主办方加好友" /></div>
+      </div>
+      <div style="margin-top:12px"><label>个人特长与优势</label><textarea id="f-strengths" placeholder="例：擅长手绘与视觉叙事，有团队协作经验"></textarea></div>
+      <div style="margin-top:12px"><label>在校奖项、荣誉或专业成果</label><textarea id="f-awards" placeholder="例：全国大学生设计竞赛二等奖；省级创新创业项目"></textarea></div>
+      <div id="matchTip"></div>
+    </div>
+
+    <div id="dynFields"></div>
+
+    <div class="card">
+      <h2>五、专业能力与技能</h2><div class="sub">可多选（简历识别会自动勾选，青色为系统自动识别项）</div>
+      <div class="chips" id="c-skills"></div>
+    </div>
+    <div class="card">
+      <h2>六、期望提升方向</h2><div class="sub">可多选</div>
+      <div class="chips" id="c-improve"></div>
+    </div>
+    <div class="card">
+      <h2>七、希望承担工作</h2><div class="sub">可多选</div>
+      <div class="chips" id="c-work"></div>
+    </div>
+
+    <div class="card">
+      <h2>八、上传材料</h2>
+      <div class="sub">浏览器版仅登记文件名用于归档；正式环境请在小程序端上传原件。建议命名：姓名_作品集.pdf</div>
+      <div id="dynMaterials"></div>
+      <div class="filebox" id="pickFiles">点击选择材料文件（支持多选）</div>
+      <div id="fileList"></div>
+    </div>
+
+    <div class="row">
+      <button class="btn btn-primary" id="btnSubmit" data-star>提交报名</button>
+      <button class="btn btn-line" id="btnReset">重填</button>
+    </div>
+
+    <div class="card hide" id="submitReceipt">
+      <div class="illus-ok"><svg viewBox="0 0 92 92" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="46" cy="46" r="40" fill="#E6F7EE" stroke="#16a34a" stroke-width="3"/>
+        <path d="M30 47 l11 12 21 -24" stroke="#16a34a" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M70 24 l1.6 3.2 3.2 .9 -2.4 2.4 .8 3.4 -3.2-1.6 -3.2 1.6 .8-3.4 -2.4-2.4 3.2-.9z" fill="#fbbf24"/>
+        <circle cx="20" cy="30" r="2.6" fill="#22d3ee"/></svg></div>
+      <h2 style="text-align:center">报名成功</h2>
+      <div class="sub" id="receiptTip" style="text-align:center"></div>
+      <label>提交码（复制发给主办方即可，主办方粘贴导入）</label>
+      <textarea class="code" id="receiptCode" readonly></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-cyan btn-sm" id="btnCopyCode">复制提交码</button>
+        <button class="btn btn-primary btn-sm" id="btnMailTo" data-star>📧 一键发给主办方</button>
+        <button class="btn btn-line btn-sm" id="btnDownloadPkg">下载报名包 .json</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 报名查询 -->
+  <div id="sub-query" class="hide" data-subp="student">
+    <div class="card">
+      <div class="card-bar"></div>
+      <h2>🔍 报名查询</h2>
+      <div class="sub">输入报名时填的 <b>姓名 + 学号</b>，看看你的申请跑到哪一步啦～ ✨</div>
+      <div class="row">
+        <input id="q-name" placeholder="姓名" style="max-width:180px" />
+        <input id="q-sid" placeholder="学号" style="max-width:180px" />
+        <button class="btn btn-ghost" id="btnQuery" data-star>查询</button>
+      </div>
+      <div id="queryResult"></div>
+    </div>
+  </div>
+
+  <!-- ④ 使用教学 -->
+  <div id="sub-stuhelp" class="hide" data-subp="student">
+    <div class="card">
+      <div class="card-bar"></div>
+      <h2>学生端使用教学</h2>
+      <div class="sub">就三步：<b>① 选项目 → ② 智能填表 → ③ 查结果</b>，全程大概 3 分钟 ⏱️</div>
+      <div class="banner info" style="margin-top:12px">
+        💡 <b>一句话版</b>：挑个项目 → 简历 / 口述自动填表 → 校对后提交 → 把提交码发给主办方 → 回来查结果。
+      </div>
+
+      <div class="list-item" style="margin-top:10px">
+        <b>STEP 1 · ⭐ 选一个你想报名的项目</b>
+        <div class="muted" style="font-size:13.5px;margin-top:4px">
+          切到「① 项目选择与切换」。主页里已经有的项目，<b>直接点「选这个项目」就行 —— 不需要你上传微信链接</b>，
+          因为主办方早就把官方链接传好了。<br>
+          点完会 <b>自动跳到「招募要求解析」</b>，把硬性条件、加分项、招募人数和要准备的材料都摊开给你看。<br>
+          想换？点另一个项目的「选这个项目」即可随时切换；也可以点「回首页切换项目」去招募页慢慢挑。
+        </div>
+      </div>
+
+      <div class="list-item">
+        <b>STEP 1.5 · 🔗 主页里没有的项目怎么办（选填）</b>
+        <div class="muted" style="font-size:13.5px;margin-top:4px">
+          只有当你想报的项目 <b>不在主页列表里</b>，才需要展开「二、主页里没有这个项目？」，
+          粘贴它的公众号链接后点「抓取链接正文」，或上传招募文件或粘贴全文。<br>
+          <b>硬条件 / 加分项 / 招募人数要点了「解析招募要求」才会弹出来</b>，不会突然冒出来吓你一跳。
+        </div>
+      </div>
+
+      <div class="list-item">
+        <b>STEP 2 · 📝 智能填表与上传材料</b>
+        <div class="muted" style="font-size:13.5px;margin-top:4px">
+          在 ① 里点「下一步：去 ② 智能填表 →」，或直接切到「② 智能填表与上传材料」。<br>
+          懒人三件套：<b>上传简历识别</b> / <b>语音快速填表</b>（对着嘴皮子讲一段自我介绍）/ <b>粘贴简历文本</b>，
+          系统会一次性把姓名、学号、年级、专业、邮箱、技能勾选全都自动填好。<br>
+          <b style="color:var(--danger)">⚠️ 自动填完一定要自己逐项校对</b>，机器人偶尔也会看走眼 🤖<br>
+          该项目专属的问题（比如「为什么想参加」）会自动生成在基本信息下面；带 <b>*</b> 的是必填。<br>
+          最后到「八、上传材料」登记材料文件名，点「提交报名」。
+        </div>
+      </div>
+
+      <div class="list-item">
+        <b>STEP 3 · 🎟️ 保存好你的提交码</b>
+        <div class="muted" style="font-size:13.5px;margin-top:4px">
+          提交成功后会生成一串 <b>提交码</b>。复制发给主办方，或下载「报名包 .json」交给主办方一键导入。<br>
+          本机记录 <b>不会跨设备、跨浏览器同步</b>，提交码就是你的凭证，记得存好 📌
+        </div>
+      </div>
+
+      <div class="list-item">
+        <b>STEP 4 · 🔍 查询报名结果</b>
+        <div class="muted" style="font-size:13.5px;margin-top:4px">
+          切到「③ 报名查询」，输入报名时填的 <b>姓名 + 学号</b>，点「查询」。<br>
+          结果会俏皮地告诉你：还没提交 🙈 ／ 还在加载中 ⏳ ／ 报名成功啦 🎉 ／ 恭喜录取，快去联系老师 🌟
+        </div>
+      </div>
+
+      <div class="banner warn" style="margin-top:12px">
+        🔒 <b>关于隐私</b>：所有数据都只存在 <b>你这台设备的浏览器</b> 里，不会自动上传到任何服务器；
+        清理浏览器缓存会清掉记录，所以提交码请一定保存好。手机号对外展示时会自动脱敏。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 主办方端（三栏） ============ -->
+<section id="view-organizer" class="hide">
+  <div class="subnav" id="orgNav">
+    <div class="subtab on" data-sub="lib">① 项目库</div>
+    <div class="subtab" data-sub="ai">② 导入材料与 AI 筛选</div>
+    <div class="subtab" data-sub="help">③ 使用教学</div>
+  </div>
+
+  <!-- ① 项目库 -->
+  <div id="sub-lib" data-subp="organizer">
+    <div class="card">
+      <h2>快速新增项目（粘贴链接发布到首页）</h2>
+      <div class="sub">把公众号文章 / 招募网页链接粘贴到下方，一键解析标题、海报、报名截止与开课时间，发布后立即出现在首页轮播与卡片。海报图优先自动抓取，抓取失败可用「上传本地海报」补一张。</div>
+      <div class="row">
+        <input id="q-url" placeholder="粘贴公众号文章或招募网页链接 https://…" style="flex:1;min-width:240px" />
+        <button class="btn btn-primary btn-sm" id="btnQuickAdd" data-star>解析并发布到首页</button>
+        <a class="btn btn-ghost btn-sm" id="btnQuickOpen" target="_blank" rel="noopener">打开</a>
+      </div>
+      <div id="q-stat" style="font-size:13px;margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <h2>编辑项目招募信息（导入文档 / 抓取公众号）</h2>
+      <div class="sub">在下方「我的项目库」点某项目的「编辑」，会把信息载入本表单；改完点「保存到项目库」即覆盖更新。也可在此导入本地文档或抓取公众号链接新建。</div>
+      <div class="row">
+        <button class="btn btn-cyan btn-sm" id="btnImportRecruitDoc" data-star>导入本地文档</button>
+        <button class="btn btn-ghost btn-sm" id="btnSample">载入川美样例</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <input id="r-url" placeholder="粘贴公众号文章链接 mp.weixin.qq.com/…" style="flex:1;min-width:240px" />
+        <button class="btn btn-c btn-sm" id="btnFetchUrl">抓取链接正文</button>
+        <a class="btn btn-line btn-sm" id="r-open" target="_blank" rel="noopener">打开</a>
+      </div>
+      <div id="urlStat" style="font-size:13px;margin-top:6px"></div>
+      <textarea id="r-text" style="margin-top:10px" placeholder="招募信息全文（导入/抓取后自动填入，也可直接粘贴编辑）"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-primary btn-sm" id="btnParse">解析筛选标准</button>
+      </div>
+      <div id="criteriaBox" class="hide" style="margin-top:14px">
+        <div class="grid">
+          <div><label>硬条件（每行一条，不满足直接淘汰）</label><textarea id="c-hard" style="min-height:96px"></textarea></div>
+          <div><label>加分项（每行一条）</label><textarea id="c-bonus" style="min-height:96px"></textarea></div>
+          <div><label>排除项（每行一条）</label><textarea id="c-exclude" style="min-height:96px"></textarea></div>
+          <div><label>最少录取人数</label><input id="c-min" type="number" /></div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btnSaveCriteria" style="margin-top:10px">保存招募配置</button>
+
+        <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
+          <label style="font-weight:600">作为招募项目发布 / 更新到首页</label>
+          <div class="sub" style="margin:4px 0 10px">保存后首页会自动展示项目海报与截止时间，学生可直接报名</div>
+          <div class="grid">
+            <div><label>项目名称</label><input id="p-title" /></div>
+            <div><label>主办方 / 发布号</label><input id="p-org" placeholder="如：川美设计学院" /></div>
+            <div><label>截止时间（已自动解析，可手改）</label><input id="p-ddl" placeholder="2026-10-15" /></div>
+            <div><label>原文链接（「详情」按钮跳转用）</label><input id="p-url" /></div>
+          </div>
+          <div style="margin-top:10px"><label>海报图片 URL（留空则用自动抓取的封面，再没有就用渐变占位海报）</label><input id="p-cover" /></div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn btn-cyan btn-sm" id="btnSaveProject">保存到项目库并展示在首页</button>
+            <button class="btn btn-line btn-sm" id="btnPickPoster">上传本地海报</button>
+            <button class="btn btn-ghost btn-sm" id="btnCancelEdit" style="display:none">取消编辑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>我的项目库 <span class="muted" style="font-weight:400" id="projCount"></span></h2>
+      <div class="sub">已发布到首页的项目，可编辑 / 删除；删除后首页不再展示</div>
+      <div id="projList"></div>
+    </div>
+
+    <div class="card">
+      <h2>数据同步与离线存储</h2>
+      <div class="sub">先看清一件事：数据只存在「打开页面的这台设备的浏览器」里，换设备不会自动出现</div>
+      <div class="banner info" id="syncBanner"></div>
+      <div class="diag" id="diag"></div>
+
+      <div style="margin-top:16px">
+        <label>方式〇 · 学生提交后「一键邮件直达」（零成本，无需服务器）</label>
+        <div class="row" style="margin-top:6px">
+          <input id="orgEmail" placeholder="主办方收件邮箱，如 recruiting@example.edu.cn" style="flex:1;min-width:220px" />
+          <button class="btn btn-c btn-sm" id="btnSaveOrgEmail">保存</button>
+        </div>
+        <div class="muted" style="font-size:12.5px;margin-top:4px">
+          填了之后，学生点「提交报名」时会自动多出一个 <b>📧 一键发给主办方</b> 按钮：点一下即自动打开他的邮件客户端，
+          <b>收件人、标题、正文（含提交码）全部填好</b>，发送即直达你的 QQ 邮箱 —— 不用你私下追着要提交码。<br>
+          收到后在这里「粘贴提交码导入」，或直接把邮箱里的附件按「② 一键导入材料包」整批处理。
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <label>方式一 · 汇总学生报名包（推荐，无需服务器、可离线）</label>
+        <div class="row" style="margin-top:6px">
+          <button class="btn btn-cyan btn-sm" id="btnImportPkg" data-star>导入报名包（可多选 .json）</button>
+          <button class="btn btn-line btn-sm" id="btnImportCode">粘贴提交码导入</button>
+        </div>
+        <textarea id="codePaste" class="code hide" style="margin-top:8px" placeholder="把学生发来的提交码粘贴到这里；可一次粘贴多段，用换行分隔"></textarea>
+        <div class="row hide" id="codePasteRow" style="margin-top:8px">
+          <button class="btn btn-primary btn-sm" id="btnApplyCode">导入</button>
+        </div>
+      </div>
+
+      <div style="margin-top:16px">
+        <label>方式二 · 可选云端同步（自备一个能存 JSON 的接口，如 JSONBin；不填则完全离线）</label>
+        <div class="row" style="margin-top:6px">
+          <input id="syncUrl" placeholder="https://api.jsonbin.io/v3/b/xxxxx" style="flex:1;min-width:220px" />
+          <button class="btn btn-c btn-sm" id="btnSyncPush">上传</button>
+          <button class="btn btn-line btn-sm" id="btnSyncPull">拉取</button>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <button class="btn btn-line btn-sm" id="btnExportAll">导出全部数据备份</button>
+        <button class="btn btn-line btn-sm" id="btnImportAll">恢复备份</button>
+      </div>
+      <div id="syncStat" style="font-size:13px;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- ② 导入材料与 AI 筛选 -->
+  <div id="sub-ai" class="hide" data-subp="organizer">
+    <div class="card">
+      <h2>选择项目</h2>
+      <div class="sub">从下方项目库选择要处理的招募项目（导入材料 / 运行筛选均作用于该项目的申请人）</div>
+      <div id="aiProjList" class="gridp" style="margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <h2>一键导入所有邮件 → 直接出评选结果</h2>
+      <div class="sub">你现在邮箱里已经堆了很多报名邮件：<b>整包丢进来就行</b>。系统会 <b>逐封拆邮件 → 取出发件人与附件 → 按人归档 → 解析简历与作品集 → 直接产出评选结果</b>，全程<b>不用再点「运行筛选」</b>。</div>
+      <div class="banner info" style="margin-bottom:12px">
+        <b>怎么把 QQ 邮箱的邮件拿出来</b>（任选一种，推荐第 1 种）：<br>
+        ① <b>Foxmail 客户端</b>登录 QQ 邮箱 → 在收件箱里 <b>Ctrl/⌘ 多选</b>（或按发件人排序整段选中）→ 右键 <b>「导出邮件 / 另存为」</b> → 得到一批 <b>.eml</b> 文件 → 全选丢进来；<br>
+        ② 把邮件附件按人分文件夹下载好 → 用「导入整个文件夹」；<br>
+        ③ 已打包成 ZIP 的（含 .eml 或材料文件）→ 用「一键导入材料包」。<br>
+        <b>认人顺序：邮件发件人姓名 → 邮件主题 / 邮箱前缀 → 上一级文件夹名 → 文件名前缀</b>；
+        附件按文件名认类型（须含「报名表 / 简历 / 作品集 / 成绩单 / 陈述」），<b>邮件正文会自动当作个人陈述参与解析</b>。
+      </div>
+      <div class="row">
+        <button class="btn btn-primary btn-sm" id="btnPickZip" data-star>📨 一键导入所有邮件（.eml / ZIP）</button>
+        <button class="btn btn-line btn-sm" id="btnPickDir" data-star>导入整个文件夹</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-ghost btn-sm" id="btnMock">载入 24 份示例</button>
+        <button class="btn btn-ghost btn-sm" id="btnParsePortfolio">按质量标准重解析作品集</button>
+        <button class="btn btn-line btn-sm" id="btnRun">重新运行评选</button>
+        <button class="btn btn-line btn-sm" id="btnClear">清空候选人库</button>
+      </div>
+      <div id="importStat" style="margin-top:10px"></div>
+      <div class="row" style="margin-top:16px">
+        <button class="btn btn-cyan" id="btnViewScreen">查看 AI 筛选结果</button>
+        <button class="btn btn-primary" id="btnViewCands">候选人库与联系方式</button>
+      </div>
+    </div>
+
+    <div class="card hide" id="aiScreenCard">
+      <h2>AI 筛选结果</h2>
+      <div id="aiScreenStat"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn btn-line btn-sm" id="btnExport">导出交付物</button>
+      </div>
+    </div>
+
+    <div class="card hide" id="aiCandCard">
+      <h2>候选人库 <span class="muted" style="font-weight:400" id="candCount"></span></h2>
+      <input id="kw" placeholder="搜索姓名 / 学号 / 专业" style="max-width:320px;margin-bottom:10px" />
+      <div id="candList"></div>
+      <div class="card hide" id="detailCard">
+        <h2>候选人详情</h2>
+        <div id="detail"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 使用教学 -->
+  <div id="sub-help" class="hide" data-subp="organizer">
+    <div class="card">
+      <h2>使用教学</h2>
+      <div class="sub">三步上手：建项目 → 收材料 → 看结果</div>
+      <div class="list-item">
+        <b>① 主办方 · 建项目</b>
+        <div class="muted" style="font-size:13.5px;margin-top:4px">在「① 项目库」粘贴公众号文章链接 → 点「解析并发布到首页」，自动生成海报与截止时间；或点「导入本地文档 / 抓取链接」手动建。在「我的项目库」可编辑、删除任意项目。</div>
+      </div>
+      <div class="list-item">
+        <b>② 主办方 · 收材料 & 筛选</b>
+        <div class="muted" style="font-size:13.5px;margin-top:4px">切到「② 导入材料与 AI 筛选」，先把学生材料（报名表 / 简历 / 作品集…）打包导入；点「运行筛选」本地 AI 自动初筛。点「查看 AI 筛选结果」查看推荐 / 待定 / 淘汰与原因；点「候选人库与联系方式」复制邮箱、拨打电话、一键发录取文案。</div>
+      </div>
+      <div class="list-item">
+        <b>③ 学生 · 报名</b>
+        <div class="muted" style="font-size:13.5px;margin-top:4px">在「① 项目选择与切换」选好项目，可粘贴 / 上传招募要求后点「解析」看条件；切到「② 智能填表与上传材料」，上传简历或语音填表，系统自动填充，校对后提交，提交码发给主办方即可。</div>
+      </div>
+      <div class="list-item">
+        <b>④ 数据怎么互通（为什么现在要靠提交码）</b>
+        <div class="muted" style="font-size:13.5px;margin-top:4px">纯静态页、<b>没有服务器</b>，学生的数据只存在他自己的浏览器里，所以没法自动飞到你这里 —— 目前提供三条路：
+          <br>　<b>A · 邮箱直达</b>（推荐先开）：在「① 项目库 → 方式〇」填好你的收件邮箱，学生提交后点「📧 一键发给主办方」即可邮件送达；
+          <br>　<b>B · 提交码 / 报名包</b>：学生复制提交码发你，你在这里粘贴或上传 .json 导入；
+          <br>　<b>C · 整包批处理</b>：把邮箱里的附件按人分文件夹下载，用「② 一键导入材料包」一次性导。<br>
+          <b>想彻底不用学生手动发送</b>，必须有一处「两边都能读写的云端」——见下方「关于微信小程序」。</div>
+      </div>
+      <div class="list-item">
+        <b>⑤ 关于微信小程序：能不能彻底免掉提交码？</b>
+        <div class="muted" style="font-size:13.5px;margin-top:4px">
+          <b>结论：光做小程序本身解决不了，必须配「云开发」才行。</b>小程序本质也只是个客户端，数据只写在手机本地的话，主办方照样看不到。<br>
+          <b>本项目已经把这条路写好了</b>（在 `screener-miniprogram/` 小程序目录里）：
+          学生提交 → <b>submitApply 云函数直写云数据库 candidates 集合</b> → 主办方小程序首页 / 候选人库<b>读同一张表</b>实时看到；
+          再由 <b>notifyNewApply 云函数用订阅消息把「有新的报名」推到你微信</b>，点开直达候选人库。<br>
+          好处：<b>不用买服务器、不用备案域名、不用自建运维</b>，且<b>彻底免掉提交码</b>。你需要做的只有一次性配置：
+          申请订阅消息模板 ID → 填进 `config/env.js` 与 `cloudfunctions/notifyNewApply/env.js` → 部署 `notifyNewApply` 云函数 →
+          在小程序首页点「🔔 开启 / 续期提醒」授权（订阅消息是<b>接收方</b>授权，所以要<b>你</b>点，不是学生点）。<br>
+          详见 `README.md` 第三节第 5 条。在这套配好之前，请先用上面的「A · 邮箱直达」或「一键导入所有邮件」把流程跑通。</div>
+      </div>
+      <div class="banner info">提示：本地数据会随浏览器清理而丢失，重要内容请定期在「① 项目库 → 数据同步与离线存储」导出备份。</div>
+    </div>
+  </div>
+</section>
+</main>
+
+<div class="savebar" id="savebar">已保存到本机</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==================== 基础数据 ==================== */
+const SKILLS = ['平面设计','视觉传达','摄影','视频拍摄/剪辑','插画','品牌设计','空间设计','产品设计',
+  '展览策划','活动策划','文案与内容创作','新媒体运营','调研与用户研究','项目策划与运营','AI辅助设计','其他']
+const IMPROVE = ['文旅项目策划','在地文化资源挖掘','文旅产品设计','文旅场景与体验设计','艺术活动策划',
+  '品牌与内容传播','项目运营','商业转化','团队协作与项目实践']
+const WORK = ['前期调研','文化资源挖掘','项目策划','视觉设计','空间/场景设计','活动策划','内容创作',
+  '品牌传播','项目运营']
+const FILE_TYPES = [
+  {key:'form', label:'报名表', words:/报名|申请表|form|application/i},
+  {key:'resume', label:'简历', words:/简历|resume|cv/i},
+  {key:'portfolio', label:'作品集', words:/作品集|portfolio|work/i},
+  {key:'transcript', label:'成绩单', words:/成绩|transcript|grade/i},
+  {key:'statement', label:'个人陈述', words:/陈述|statement|动机|自述/i}
+]
+const NAMES = ['张一鸣','李思睿','王梓涵','陈牧之','周雨桐','吴清扬','郑南星','孙可欣','何书瑶','林致远',
+  '徐若彤','高子墨','马语杉','梁亦寒','谢知微','唐斯年','许安然','邓文澜','冯亦驰','曾浣青','彭嘉树',
+  '袁清越','苏白露','崔明轩']
+const PORTFOLIO_TEXT = [
+  '作品集包含平面设计海报3组、在地文化插画2组，采用国潮风格，已完成落地打样并投入使用，附用户调研问卷与迭代草图，团队4人协作完成。',
+  '摄影作品1组，纪实风格，聚焦乡镇集市；含前期访谈记录与用户画像，但未见落地成果。',
+  '品牌设计完整案例：包装设计落地量产，AI 辅助生成视觉（Midjourney），有过程草图与方案比选。',
+  '空间设计课程作业，模型照片若干，无文字说明。',
+  '',
+  '短视频与剪辑作品2组，实验性影像，含分镜脚本；与插画师团队合作完成市集活动策划并执行。'
+]
+const SAMPLE_RECRUIT = `艺术与文旅产业融合创新设计微专业招生简章
+一、招募对象：本校在读学生，专业为设计学、视觉传达、环境设计、产品设计、数字媒体艺术等相关专业；大三及以上（含研究生）。
+二、招募人数：最少录取 25 人。
+三、时间投入：每周可投入 8 小时以上，到岗时间 2026年10月。
+四、优先条件：有相关项目或实习经历；作品集完整且有代表性；掌握 AI 辅助设计等技能；有获奖或落地案例。
+五、报名截止：2026年10月15日。
+六、以下情形不予录取：材料严重不齐（缺报名表或作品集）；简历与报名表信息矛盾；明显无投递动机。`
+const SAMPLE_RECRUIT2 = `数字文创设计工作坊（冬季）招募
+一、招募对象：在校学生，专业为设计学、数字媒体艺术、广告学等相关专业；大三及以上（含研究生）。
+二、招募人数：最少录取 12 人。
+三、时间投入：每周可投入 6 小时以上，到岗时间 2026年12月。
+四、优先条件：有文创产品落地经验；作品集完整且有代表性；掌握 AI 辅助设计等技能；有市集或展览执行经历。
+五、以下情形不予录取：材料严重不齐（缺报名表或作品集）；明显无投递动机。`
+
+/* ==================== 工具函数 ==================== */
+const $ = s => document.querySelector(s)
+const $$ = s => [...document.querySelectorAll(s)]
+const toast = m => { const t=$('#toast'); t.textContent=m; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),1800) }
+const maskPhone = p => { p=String(p||'').trim(); if(/^\d{11}$/.test(p)) return p.slice(0,3)+'****'+p.slice(7)
+  return p.length>4 ? p.slice(0,3)+'****'+p.slice(-2) : p }
+const maskEmail = e => { e=String(e||''); const i=e.indexOf('@'); if(i<0) return e
+  return e.slice(0,Math.min(2,i))+'***'+e.slice(i) }
+
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))
+const lines = s => String(s||'').split('\n').map(x=>x.trim()).filter(Boolean)
+
+function gradeYear(g){
+  if(!g) return null
+  const cn={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9}
+  if(/研[一二三四]/.test(g)) return 5
+  let m=String(g).match(/大([一二三四五六七八九])/); if(m) return cn[m[1]]
+  m=String(g).match(/(\d)年级/); if(m) return +m[1]
+  return null
+}
+
+/* ==================== 多元评价：竞赛 / 学术 / 实践成果分级（规则引擎） ==================== */
+const LEVEL_ORDER=['国家级','省级','市级','校级','未分级']
+const LEVEL_BASE={国家级:20,省级:14,市级:9,校级:5,未分级:3}
+const LEVEL_DESC={国家级:'国家级',省级:'省部级',市级:'市厅级',校级:'校院级',未分级:'未标注级别'}
+const RANK_RATE=[['特等奖',1],['金奖',1],['一等奖',.9],['银奖',.82],['二等奖',.75],['铜奖',.68],
+  ['三等奖',.6],['最佳',.85],['佳作奖',.4],['优秀奖',.42],['入围',.36],['提名',.36],['入选',.36]]
+const ACADEMIC_RULES=[['论文发表',/论文|期刊|收录|cssci|sci|ei|北大核心|核心期刊|学报|见刊/],
+  ['专利成果',/专利|发明专利|实用新型|外观设计/],
+  ['科研课题 / 大创项目',/课题|大创|大学生创新创业训练|科研项目|基金立项|结项|纵向项目|横向课题/],
+  ['著作出版',/出版|专著|编著|教材|画册/],
+  ['学术会议 / 论坛',/学术论坛|学术会议|研讨会|主旨发言|论文宣讲|学术报告/]]
+const PRACTICE_RULES=[['展览参展 / 策展',/展览|参展|个展|群展|双年展|艺博会|策展|美术馆|画廊|展厅|博览会/],
+  ['作品被收藏 / 采用',/收藏|馆藏|永久陈列|被采用|选用|采用/],
+  ['落地量产 / 商业转化',/量产|投产|落地|已上线|投入使用|打样|销售额|订单|门店|上线运营|商业转化/],
+  ['市集 / 工作坊 / 活动执行',/市集|工作坊|活动执行|路演|快闪|承接|执行了/],
+  ['实习 / 真实项目经历',/实习|项目经历|甲方|客户|外包|兼职|项目制/]]
+/* 判断一条成果描述的行政级别（启发式规则，命中即取最高） */
+function levelOf(s){
+  const t=String(s||'')
+  if(/国家级|全国|国赛|教育部|文旅部|文化和旅游部|国家艺术基金|中国美术家协会|中国装饰|中国国际|亚洲|亚太|国际/.test(t)) return '国家级'
+  if(/省|自治[区县州]/.test(t)) return '省级'
+  if(/市|地区|自治盟/.test(t)) return '市级'
+  if(/校|学院|院系|奖学金/.test(t)) return '校级'
+  return '未分级'
+}
+function rankOf(s){
+  const t=String(s||'')
+  for(const [label,rate] of RANK_RATE){ if(t.includes(label)) return {label,rate} }
+  return {label:'未标名次',rate:.45}
+}
+/* 把候选人的奖项 / 成果文本拆成「竞赛 / 学术 / 实践」三类并分级 */
+function analyzeAchievements(c){
+  c=c||{}
+  const split=s=>String(s||'').split(/[\n；;。、,，]+|\s{2,}/).map(x=>x.trim()).filter(x=>x.length>=2)
+  const items=[]
+  ;[c.awards,c.strengths,c.statement,c.projectAchievements].forEach(s=>split(s).forEach(t=>items.push(t)))
+  const AWARD_RE=/(奖|竞赛|比赛|大赛|杯|入选|入围|荣誉|称号|冠军|亚军|季军|一等|二等|三等|优秀|排名|第[一二三]名)/
+  const contests=[], academic=[], practice=[]
+  items.forEach(raw=>{
+    const low=raw.toLowerCase()
+    let any=false
+    ACADEMIC_RULES.forEach(([label,re])=>{ if(re.test(low)){ academic.push({raw,type:label,score:8}); any=true } })
+    PRACTICE_RULES.forEach(([label,re])=>{ if(re.test(low)){ practice.push({raw,type:label,score:6}); any=true } })
+    if(AWARD_RE.test(raw)){
+      const lv=levelOf(raw), rk=rankOf(raw)
+      contests.push({raw,level:lv,rank:rk.label,score:Math.round((LEVEL_BASE[lv]||3)*rk.rate)})
+      any=true
+    }
+    return any
+  })
+  const sum=a=>a.reduce((s,x)=>s+x.score,0)
+  const norm=(v,cap)=>Math.min(cap,v)
+  const byLevel={}
+  contests.forEach(x=>{ byLevel[x.level]=(byLevel[x.level]||0)+1 })
+  return {
+    contests, academic, practice,
+    contestScore:norm(sum(contests),20),
+    academicScore:norm(sum(academic),10),
+    practiceScore:norm(sum(practice),15),
+    topLevel: contests.length ? LEVEL_ORDER.find(l=>contests.some(x=>x.level===l)) : '',
+    byLevel,
+    levelText: contests.length
+      ? LEVEL_ORDER.filter(l=>byLevel[l]).map(l=>LEVEL_DESC[l]+' '+byLevel[l]+' 项').join('、')
+      : '未检索到竞赛获奖记录'
+  }
+}
+
+/* ==================== 作品集解析（规则引擎） ==================== */
+const CATEGORIES=[['平面设计',['平面设计','海报','poster','字体','版式','标志','logo']],
+ ['视觉传达',['视觉传达','视传','信息设计','导视']],['摄影',['摄影','写真','纪实','人像','影像']],
+ ['视频拍摄/剪辑',['短片','视频','纪录片','剪辑','分镜','动画']],['插画',['插画','绘本','手绘','漫画']],
+ ['品牌设计',['品牌设计','branding','包装']],['空间设计',['空间设计','室内','展陈','景观','建筑','装置']],
+ ['产品设计',['产品设计','工业设计','家具','文创产品','周边']],['展览策划',['展览','策展','美术馆','展厅']],
+ ['活动策划',['活动策划','市集','工作坊','活动执行','路演']],['文案与内容创作',['文案','内容创作','新媒体','推文','公众号']],
+ ['UI/交互设计',['ui','界面设计','交互设计','app设计','网页设计','原型']]]
+const STYLES=[['国潮',['国潮','国风','传统纹样','非遗','民俗','水墨']],['在地文化',['在地','本土','地域','乡土','村落','文旅']],
+ ['极简',['极简','简约','留白','几何','黑白']],['插画叙事',['叙事','故事','绘本','角色','世界观']],
+ ['实验性',['实验','先锋','跨界','生成艺术']],['复古怀旧',['复古','怀旧','胶片','像素']],['科技感',['科技','未来','赛博','虚拟']]]
+const ADV_RULES=[['叙事能力强，作品有完整故事线',['叙事','故事','脚本','情节','世界观']],
+ ['有完整落地项目，方案具备可执行性',['落地','量产','已上线','投入使用','打样','投产']],
+ ['手绘/插画功底扎实',['手绘','插画','水彩','素描','速写']],
+ ['掌握 AI 辅助设计工具',['ai','midjourney','stable diffusion','comfyui','aigc','生成式']],
+ ['具备用户研究与数据支撑',['用户研究','调研','问卷','访谈','数据分析','用户画像']],
+ ['有展览/活动策划与执行经验',['策展','展览','活动执行','工作坊','市集']],
+ ['有团队协作与项目统筹经验',['团队','统筹','主导','负责','组长']],
+ ['设计流程完整，含调研—草图—迭代记录',['草图','迭代','原型','测试','方案比选']]]
+const WEAK_RULES=[['缺少用户研究与数据支撑的说明',['用户研究','调研','问卷','访谈','数据','用户画像']],
+ ['未见完整落地成果，多为概念方案',['落地','量产','已上线','投入使用','投产']],
+ ['未展示设计过程与迭代记录',['草图','迭代','原型','过程','方案比选']],
+ ['未体现团队协作或真实项目背景',['团队','协作','统筹','客户','甲方']]]
+
+/* —— 作品集质量标准：6 个可核查维度，逐条给客观证据 —— */
+const QUALITY_DIMS=[
+  {key:'scale', label:'作品体量与完整度', max:16, need:2,
+   kw:['组','件','套','幅','项目','系列','完整','系列作品','成册','年版'],
+   desc:'成果是否成体系、具备足够体量'},
+  {key:'process', label:'设计过程深度', max:18, need:3,
+   kw:['调研','用户研究','访谈','问卷','草图','迭代','原型','测试','方案比选','用户画像','数据分析','前期分析'],
+   desc:'是否有「调研—草图—迭代—测试」的完整链路'},
+  {key:'landing', label:'落地与转化', max:18, need:2,
+   kw:['落地','量产','投产','已上线','投入使用','打样','客户','甲方','门店','订单','销售额','商业转化','交付'],
+   desc:'作品是否真正落地、量产或产生应用价值'},
+  {key:'narrative', label:'叙事与概念', max:16, need:2,
+   kw:['叙事','故事','主题','概念','世界观','情节','脚本','分镜','主张','隐喻','脉络'],
+   desc:'是否有清晰的主题与叙事结构'},
+  {key:'craft', label:'技法表现力', max:16, need:2,
+   kw:['手绘','插画','水彩','素描','速写','建模','渲染','3d','midjourney','aigc','生成式','摄影','后期','染织','雕刻'],
+   desc:'技法是否扎实、是否存在明显技术门槛'},
+  {key:'collab', label:'协作与执行', max:16, need:2,
+   kw:['团队','协作','统筹','主导','负责','组长','分工','项目负责','执行','多人'],
+   desc:'是否有真实团队协作与项目执行经验'}
+]
+function analyzePortfolio(text){
+  const raw=String(text||'')
+  const t=raw.toLowerCase()
+  const hit=w=>Array.isArray(w)?w.some(x=>t.includes(String(x).toLowerCase())):t.includes(String(w).toLowerCase())
+  const cats=CATEGORIES.map(([n,kw])=>({name:n,count:kw.filter(hit).length}))
+    .filter(x=>x.count>0).sort((a,b)=>b.count-a.count).slice(0,4)
+  const stys=STYLES.map(([n,kw])=>({name:n,count:kw.filter(hit).length}))
+    .filter(x=>x.count>0).sort((a,b)=>b.count-a.count).slice(0,2)
+
+  /* —— 客观：逐维度统计证据命中数并按 need 折算分数 —— */
+  const quality=QUALITY_DIMS.map(d=>{
+    const ev=d.kw.filter(hit)
+    const n=ev.length
+    const r=n===0?0:Math.min(1, n/Math.max(2,d.need))
+    const level = n===0 ? 'D' : r>=.85 ? 'A' : r>=.55 ? 'B' : 'C'
+    return {key:d.key,label:d.label,dim:d.key,max:d.max,need:d.need,
+      score:Math.round(d.max*r),level,n,evidence:ev.slice(0,4),kw:d.kw,desc:d.desc,
+      standard:d.desc+'（需命中 ≥'+d.need+' 类证据，实得 '+n+' 类）'}
+  })
+  /* 作品数量：从「3组 / 12件」等数量词里取最大值 */
+  const nums=[...raw.matchAll(/([0-9]+)\s*(组|件|幅|套|个|部|篇|页|章)/g)].map(m=>+m[1])
+  const worksGroups=nums.length?Math.max.apply(null,nums):0
+  const qScore=quality.reduce((s,x)=>s+x.score,0)
+  const qMax=QUALITY_DIMS.reduce((s,x)=>s+x.max,0)
+
+  /* —— 优势 / 不足：都要落到具体维度与具体证据上 —— */
+  const advantages=quality.filter(q=>q.level==='A'||q.score/q.max>=.6)
+    .map(q=>({dim:q.label,score:q.score,max:q.max,level:q.level,
+      text:q.label+'表现突出：命中 '+q.n+' 类证据（'+q.evidence.slice(0,3).join('、')+'）',
+      standard:q.standard}))
+  const weaknesses=quality.filter(q=>q.level==='D'||q.score/q.max<=.35)
+    .map(q=>({dim:q.label,score:q.score,max:q.max,level:q.level,
+      text:q.n===0
+        ? (q.label+'缺失：全文未出现「'+q.kw.slice(0,3).join(' / ')+'」等任一表述，该维度无法举证')
+        : (q.label+'偏弱：仅命中 '+q.n+' 类证据（'+q.evidence.join('、')+'），低于核查门槛 '+q.need+' 类'),
+      standard:q.standard}))
+  if(cats.length<=1 && raw.trim()) weaknesses.push({dim:'跨媒介能力',score:0,max:10,level:'D',
+    text:'跨媒介能力待验证：仅识别出 '+(cats.length)+' 类体裁，缺少跨领域作品佐证',standard:'建议覆盖 ≥2 类体裁'})
+  if(!raw.trim()) weaknesses.push({dim:'文本可读性',score:0,max:10,level:'D',
+    text:'作品集无有效文本内容，全部质量维度均无法自动举证，必须人工查看原件',standard:'需人工复核'})
+
+  /* —— 主观：基于上述证据给出可读的整体判断 —— */
+  const rate=qMax?qScore/qMax:0
+  const grade = !raw.trim() ? '未评级' : rate>=.85 ? 'A+' : rate>=.72 ? 'A' :
+    rate>=.58 ? 'B+' : rate>=.42 ? 'B' : rate>=.28 ? 'C' : 'D'
+  const subjective = !raw.trim()
+    ? '无有效文本，无法作主观判断，必须由评委人工查看原件。'
+    : (cats.length
+        ? ('作品主体为「'+cats[0].name+'」'+(cats[1]?'，兼涉'+cats[1].name:'')+
+           '，共识别 '+cats.length+' 类体裁'+(stys.length?('，视觉风格偏'+stys.map(s=>s.name).join(' + ')):'')+
+           (worksGroups?('，自述体量约 '+worksGroups+' 组/件'):'')+'。')
+        : '文本过短或表述笼统，体裁指向不明确，需人工确认作品真实类型。')
+      + (advantages.length? ('强项集中在'+advantages.slice(0,2).map(a=>a.dim).join(' 与 ')+'。') : '')
+      + (weaknesses.length? ('主要短板为'+weaknesses.slice(0,2).map(w=>w.dim).join('、')+'。') : '')
+      + (rate>=.72 ? '整体判断：属于可直接进入面试的高质量作品集。'
+         : rate>=.42 ? '整体判断：具备基本完成度，建议面试时重点追问短板维度。'
+         : '整体判断：证据支撑不足，需人工复核原件后再定档。')
+
+  return {categories:cats, styles:stys, quality, advantages, weaknesses, subjective, grade,
+    qualityScore:qScore, qualityMax:qMax, worksGroups, source:'rule',
+    /* 兼容旧展示字段 */
+    category:cats.length? cats.map(c=>c.name+'（'+c.count+' 项依据）').join('、') : '未识别（无有效文本）',
+    style:stys.length? stys.map(s=>s.name).join(' + ') : '未识别',
+    advantage:advantages.length? advantages.map(a=>a.text).join('；') : '',
+    weakness:weaknesses.length? weaknesses.map(w=>w.text).join('；') : ''}
+}
+
+/* ==================== 筛选引擎（七维百分制） ==================== */
+const SCORE_DIMS=[{key:'basic',label:'基本条件',max:15},{key:'material',label:'材料完备度',max:10},
+  {key:'contest',label:'竞赛成果',max:20},{key:'academic',label:'学术成果',max:10},
+  {key:'practice',label:'实践成果',max:15},{key:'portfolio',label:'作品集质量',max:25},
+  {key:'bonus',label:'意愿与加分项',max:5}]   // 合计 100
+function screenOne(c){
+  const f=c.files||{}
+  const text=[c.strengths,c.awards,c.statement].filter(Boolean).join(' ').toLowerCase()
+  const ach=analyzeAchievements(c)
+  const po=c.portfolioOverview||null
+  const missing=[]; if(!f.form) missing.push('报名表'); if(!f.portfolio) missing.push('作品集')
+  const excludeReason = missing.length>=2 ? '材料严重不齐（缺'+missing.join('、')+'）' : ''
+  const hardFails=[]
+  const dims=[]
+
+  /* 1 基本条件 15 */
+  let bScore=0; const bNotes=[]
+  const gy=gradeYear(c.grade)
+  if(gy===null){ bScore+=9; bNotes.push('年级未标注，暂按待复核处理') }
+  else if(gy>=3){ bScore+=12; bNotes.push('年级符合要求（'+c.grade+'）') }
+  else { hardFails.push('年级不符合（需大三及以上）'); bNotes.push('年级偏低（'+c.grade+'）') }
+  if(c.major){ if(MAJOR_HINT.test(c.major)){ bScore+=3; bNotes.push('专业方向匹配（'+c.major+'）') }
+    else bNotes.push('专业「'+c.major+'」需人工复核是否相关') }
+  bScore=Math.min(15,bScore)
+  dims.push({key:'basic',label:'基本条件',max:15,score:bScore,level:bScore>=12?'A':bScore>=8?'B':'C',notes:bNotes})
+
+  /* 2 材料完备度 10 */
+  let mScore=0; const mNotes=[]
+  if(!missing.length){ mScore+=7; mNotes.push('报名表与作品集齐备') } else { mNotes.push('缺失关键材料：'+missing.join('、')) }
+  if(f.resume){ mScore+=2; mNotes.push('有简历') }
+  if(f.transcript){ mScore+=1; mNotes.push('有成绩单') }
+  if(f.statement){ mScore+=1; mNotes.push('有个人陈述') }
+  mScore=Math.min(10,mScore)
+  dims.push({key:'material',label:'材料完备度',max:10,score:mScore,level:mScore>=8?'A':mScore>=5?'B':'D',notes:mNotes})
+
+  /* 3 竞赛成果 20（按行政级别 × 奖项名次加权） */
+  const ctScore=Math.min(20,ach.contestScore)
+  const ctNotes = ach.contests.length
+    ? ach.contests.slice(0,5).map(x=>'【'+LEVEL_DESC[x.level]+(x.rank!=='未标名次'?('·'+x.rank):'')+'】'+x.raw.slice(0,30))
+    : ['未检索到竞赛获奖记录']
+  dims.push({key:'contest',label:'竞赛成果',max:20,score:ctScore,
+    level:ctScore>=14?'A':ctScore>=7?'B':ctScore>0?'C':'D',notes:ctNotes,detail:ach.levelText})
+
+  /* 4 学术成果 10 */
+  const acScore=Math.min(10,ach.academicScore)
+  const acTypes=[...new Set(ach.academic.map(x=>x.type))]
+  dims.push({key:'academic',label:'学术成果',max:10,score:acScore,
+    level:acScore>=7?'A':acScore>=4?'B':acScore>0?'C':'D',
+    notes:acTypes.length? acTypes.map(t=>'含'+t).concat(ach.academic.slice(0,2).map(x=>'· '+x.raw.slice(0,28))) : ['未见论文 / 专利 / 课题等学术成果']})
+
+  /* 5 实践成果 15（展览 / 收藏 / 落地 / 市集 / 实习） */
+  const prScore=Math.min(15,ach.practiceScore)
+  const prTypes=[...new Set(ach.practice.map(x=>x.type))]
+  dims.push({key:'practice',label:'实践成果',max:15,score:prScore,
+    level:prScore>=10?'A':prScore>=5?'B':prScore>0?'C':'D',
+    notes:prTypes.length? prTypes.map(t=>'含'+t).concat(ach.practice.slice(0,2).map(x=>'· '+x.raw.slice(0,28))) : ['未见展览 / 落地 / 市集等实践产出']})
+
+  /* 6 作品集质量 25（用质量标准客观分折算，不再只写「完整」） */
+  const pfScore = po ? Math.round((po.qualityScore||0)/((po.qualityMax||100)||100)*25) : 0
+  const pfNotes=[]
+  if(!po) pfNotes.push('作品集未解析')
+  else{
+    if(po.category) pfNotes.push('体裁类别：'+po.category)
+    if(po.grade) pfNotes.push('质量等级 '+po.grade+'（'+po.qualityScore+'/'+po.qualityMax+' 分）')
+    if(po.advantages&&po.advantages.length) pfNotes.push('优势：'+po.advantages[0].text)
+    if(po.weaknesses&&po.weaknesses.length) pfNotes.push('不足：'+po.weaknesses[0].text)
+  }
+  dims.push({key:'portfolio',label:'作品集质量',max:25,score:pfScore,
+    level:pfScore>=18?'A':pfScore>=11?'B':pfScore>0?'C':'D',notes:pfNotes})
+
+  /* 7 意愿与加分项 5 */
+  let nScore=0; const bonusHits=[]
+  if(/项目|实习|经历/.test(text)){ nScore+=2; bonusHits.push('有相关项目或实习经历') }
+  if((c.skills||[]).includes('AI辅助设计')){ nScore+=2; bonusHits.push('掌握 AI 辅助设计') }
+  const willCnt=(c.improve||[]).length+(c.work||[]).length
+  if(willCnt>=3){ nScore+=1; bonusHits.push('实践意愿明确（勾选 '+willCnt+' 项）') }
+  nScore=Math.min(5,nScore)
+  dims.push({key:'bonus',label:'意愿与加分项',max:5,score:nScore,
+    level:nScore>=4?'A':nScore>=2?'B':'C',
+    notes:[bonusHits.length? bonusHits.join('、') : '未命中加分项']})
+
+  const score=dims.reduce((s,d)=>s+d.score,0)
+
+  /* —— 优势 / 不足：逐维度归因，每条都有具体证据 —— */
+  const advantages=[], disadvantages=[]
+  dims.forEach(d=>{
+    if(d.level==='A'&&d.max>=10&&d.score>0) advantages.push(d.notes.slice(0,2).join('；'))
+    else if(d.level==='D'||(d.max>=15&&d.score/d.max<0.35)) disadvantages.push(d.notes.slice(0,2).join('；'))
+  })
+  if(hardFails.length) disadvantages.push('硬条件不满足：'+hardFails.join('、'))
+
+  let tier='待定', reason=''
+  if(excludeReason){tier='淘汰';reason=excludeReason}
+  else if(hardFails.length){tier='淘汰';reason='硬条件不满足：'+hardFails.join('、')}
+  return {_id:c._id,name:c.name,score,maxScore:100,dims,ach,
+    advantages,disadvantages,bonusCount:bonusHits.length,bonusHits,hardFails,tier,reason,reasons:[]}
+}
+function buildInterviewPrep(c,r){
+  const adv=[]
+  if(c.awards&&c.awards.trim()) adv.push({text:'有专业奖项/成果',source:c.awards.slice(0,40)})
+  if((c.skills||[]).includes('AI辅助设计')) adv.push({text:'掌握 AI 辅助设计',source:'专业技能勾选 AI辅助设计'})
+  if(c.portfolioOverview&&c.portfolioOverview.advantage) adv.push({text:c.portfolioOverview.advantage,source:'作品集解析'})
+  if((c.strengths||'').trim()) adv.push({text:c.strengths.slice(0,40),source:'个人特长与优势'})
+  const q=[]
+  if(!c.portfolioOverview) q.push('作品集未解析，请现场展示并讲述1件最满意的作品。')
+  else if(c.portfolioOverview.weakness) q.push('作品集中'+c.portfolioOverview.weakness+'，请补充说明相关思考。')
+  if(!(c.skills||[]).includes('调研与用户研究')) q.push('本微专业强调在地文化挖掘，你打算如何补足用户研究能力？')
+  q.push('结合你的实践意愿（'+(c.work||[]).join('、')+'），你希望在本期真实文旅项目中承担什么角色？')
+  while(q.length<3) q.push('请简述你报名本微专业的动机与学习目标。')
+  return {name:r.name,email:maskEmail(c.email),phone:maskPhone(c.phone),advantages:adv.slice(0,3),questions:q.slice(0,3)}
+}
+function runPipeline(list,criteria){
+  const minAdmit=criteria.minAdmit||0
+  const materialList=list.map(c=>{const f=c.files||{}
+    return {name:c.name,studentId:c.studentId,form:!!f.form,resume:!!f.resume,portfolio:!!f.portfolio,
+      transcript:!!f.transcript,statement:!!f.statement,complete:!!(f.form&&f.resume&&f.portfolio&&f.transcript&&f.statement)}})
+  const masterRows=list.map(c=>({name:c.name,studentId:c.studentId,age:c.age,gender:c.gender,grade:c.grade,
+    major:c.major,email:maskEmail(c.email),phone:maskPhone(c.phone),strengths:c.strengths||'',awards:c.awards||'',
+    skills:c.skills||[],improve:c.improve||[],work:c.work||[],portfolioOverview:c.portfolioOverview||null,
+    projectTitle:c.projectTitle||''}))
+  const base=list.map(screenOne)
+  let elim=base.filter(r=>r.tier==='淘汰')
+  let pend=base.filter(r=>r.tier!=='淘汰').sort((a,b)=>b.score-a.score)
+  const n=pend.length
+  let rate=.25, cut=Math.max(1,Math.ceil(n*rate))
+  let rec=pend.slice(0,cut); pend=pend.slice(cut)
+  rec.forEach(r=>r.tier='推荐'); pend.forEach(r=>r.tier='待定')
+  const fbLog=[]; let guard=0
+  const need=()=>minAdmit-rec.length
+  while(rec.length<minAdmit && guard<40){
+    guard++
+    let progressed=false
+    for(const th of [1,0]){
+      if(rec.length>=minAdmit) break
+      const pool=pend.filter(r=>r.bonusCount>=th).sort((a,b)=>b.score-a.score)
+      if(!pool.length) continue
+      const take=pool.slice(0,need())
+      take.forEach(r=>{r.tier='推荐';r.fallback=true;r.fallbackReason='兜底入选：加分项门槛放宽至≥'+th;rec.push(r)})
+      pend=pend.filter(r=>!take.includes(r))
+      fbLog.push('放宽加分项门槛至≥'+th+'（+'+take.length+'人）'); progressed=true
+    }
+    if(rec.length>=minAdmit) break
+    const lowPri=criteria.hardPriority||['年级不符合（需大三及以上）']
+    const reAdd=elim.filter(r=>r.hardFails.length&&r.hardFails.every(f=>lowPri.includes(f))).sort((a,b)=>b.score-a.score)
+    if(reAdd.length){
+      const take=reAdd.slice(0,need())
+      take.forEach(r=>{r.tier='推荐';r.fallback=true;r.fallbackReason='兜底入选：放宽硬条件「'+r.hardFails.join('、')+'」'
+        rec.push(r); elim.splice(elim.indexOf(r),1)})
+      fbLog.push('放宽硬条件：'+take.map(r=>r.hardFails[0]).join('、')+'（+'+take.length+'人）'); progressed=true
+    }
+    if(rec.length>=minAdmit) break
+    if(rate<.5 && pend.length){
+      const prev=rate; rate=Math.min(.5,rate+.05)
+      const newCut=Math.max(cut,Math.ceil(n*rate))
+      const take=pend.slice(0,newCut-rec.length)
+      if(take.length){
+        take.forEach(r=>{r.tier='推荐';r.fallback=true
+          r.fallbackReason='兜底入选：录取率由'+(prev*100).toFixed(0)+'%提升至'+(rate*100).toFixed(0)+'%';rec.push(r)})
+        pend=pend.slice(take.length); cut=newCut
+        fbLog.push('提高录取率至'+(rate*100).toFixed(0)+'%（+'+take.length+'人）'); progressed=true
+      }
+    }
+    if(!progressed) break
+  }
+  rec.sort((a,b)=>b.score-a.score)
+  const byId={}; list.forEach(c=>byId[c._id]=c)
+
+  /* —— 生成可读的多元评价：逐维度评分 + 优势 + 不足 —— */
+  const MAX=100
+  const all=[...rec,...pend,...elim]
+  const rank={}; all.forEach((r,i)=>rank[r._id]=i+1)
+  const cutoff=rec.length?rec[rec.length-1].score:0
+  const dimLine=r=>'多维评分：'+(r.dims||[]).map(d=>d.label+' '+d.score+'/'+d.max).join('，')
+  all.forEach(r=>{
+    const parts=[]
+    if(r.tier==='淘汰'){
+      parts.push(r.reason||'未满足基本条件')
+      parts.push(dimLine(r))
+      if(r.advantages&&r.advantages.length) parts.push('★ 仍有优势：'+r.advantages.slice(0,2).join('；'))
+      if(r.disadvantages&&r.disadvantages.length) parts.push('☆ 主要不足：'+r.disadvantages.slice(0,2).join('；'))
+      r.reasons=parts.slice(); r.reason=parts.join('；'); return
+    }
+    parts.push('满足年级 / 专业等硬条件')
+    parts.push(r.bonusHits.length ? ('命中加分项 '+r.bonusHits.length+'/3：'+r.bonusHits.join('、')) : '未命中加分项')
+    parts.push(dimLine(r))
+    if(r.advantages&&r.advantages.length) parts.push('★ 优势：'+r.advantages.slice(0,3).join('；'))
+    if(r.disadvantages&&r.disadvantages.length) parts.push('☆ 不足：'+r.disadvantages.slice(0,3).join('；'))
+    parts.push('综合评分 '+r.score+' / '+MAX)
+    if(r.tier==='推荐') parts.push(r.fallback ? ('经兜底放宽录取（'+r.fallbackReason+'）') : ('排名 '+rank[r._id]+' / '+all.length+'，位于录取线内'))
+    else{
+      const gap=Math.max(0,cutoff-r.score)
+      parts.push('排名 '+rank[r._id]+' / '+all.length+'，'+(gap>0?('距录取线差 '+gap+' 分'):'与录取线同分，受名额限制未入选'))
+    }
+    r.reasons=parts.slice(); r.reason=parts.join('；')
+  })
+
+  return {materialList,masterRows,screenResults:[...rec,...pend,...elim],
+    interviewPrep:[...rec,...pend].map(r=>buildInterviewPrep(byId[r._id],r)),fallbackLog:fbLog,
+    stats:{total:list.length,recommend:rec.length,pending:pend.length,eliminated:elim.length,fallbackCount:fbLog.length}}
+}
+
+/* ==================== 招募信息解析（规则） ==================== */
+function parseRecruit(text){
+  const t=String(text||'')
+  const hard=[]; if(/本校在读|在校学生/.test(t)) hard.push('本校在读')
+  if(/专业/.test(t)) hard.push('专业相关（设计学类相关）')
+  let m=t.match(/大([三四])及以上|大([三四])以上/)
+  if(m) hard.push('年级符合（'+(m[1]||m[2])+'年级及以上）')
+  if(m=t.match(/每周可投入\s*(\d+)\s*小时/)) hard.push('每周可投入 '+m[1]+' 小时以上')
+  if(m=t.match(/到岗时间\s*([0-9]{4}年[0-9]{1,2}月)/)) hard.push('到岗时间符合（'+m[1]+'）')
+  const bonus=[]; if(/项目或实习经历|实习经历/.test(t)) bonus.push('相关项目/实习经历')
+  if(/作品集完整/.test(t)) bonus.push('作品集完整且有代表性')
+  if(/AI 辅助设计|AI辅助设计/.test(t)) bonus.push('掌握 AI 辅助设计等技能')
+  if(/获奖|落地案例/.test(t)) bonus.push('有获奖或落地案例')
+  const exclude=[]; if(/材料严重不齐/.test(t)) exclude.push('材料严重不齐（缺报名表或作品集）')
+  if(/信息矛盾/.test(t)) exclude.push('简历与报名表信息矛盾')
+  if(/无投递动机/.test(t)) exclude.push('明显无投递动机')
+  let minAdmit=0
+  if(m=t.match(/最少录取\s*(\d+)\s*人/)) minAdmit=+m[1]
+  else if(m=t.match(/招募人数[：:]\s*(\d+)/)) minAdmit=+m[1]
+  return {hard,bonus,exclude,minAdmit,hardPriority:['年级不符合（需大三及以上）']}
+}
+
+/* ==================== 存储 ==================== */
+const KEY='screener_v1'
+let DB={candidates:[],recruit:null,result:null,stuRecruit:null,syncUrl:'',lastSaveAt:0,
+  projects:[],applyProject:null,removed:[]}
+function save(){
+  try{
+    DB.lastSaveAt=Date.now()
+    localStorage.setItem(KEY,JSON.stringify(DB))
+    flashSaved()
+  }catch(e){
+    toast('保存失败：本地存储空间不足或被浏览器禁用，请先导出备份')
+  }
+}
+function load(){
+  try{
+    const s=localStorage.getItem(KEY)
+    if(s) DB=Object.assign(DB,JSON.parse(s))
+  }catch(e){ toast('读取本地数据失败，将以空白数据启动') }
+  if(!Array.isArray(DB.candidates)) DB.candidates=[]
+  if(!Array.isArray(DB.projects)) DB.projects=[]
+  if(!Array.isArray(DB.removed)) DB.removed=[]
+}
+function flashSaved(){
+  const b=$('#savebar'); if(!b) return
+  const d=new Date()
+  b.textContent='已保存到本机 '+[d.getHours(),d.getMinutes(),d.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':')
+  b.classList.add('on')
+  clearTimeout(window.__sbT)
+  window.__sbT=setTimeout(()=>b.classList.remove('on'),1800)
+  if(typeof renderDiag==='function'&&$('#diag')) renderDiag()
+}
+function storageBytes(){
+  try{ return new Blob([localStorage.getItem(KEY)||'']).size }catch(e){ return (localStorage.getItem(KEY)||'').length*2 }
+}
+
+/* ==================== 文件读取（txt / md / docx） ==================== */
+function ensureJSZip(){
+  if(window.JSZip) return Promise.resolve()
+  if(window.__jszipLoading) return window.__jszipLoading
+  window.__jszipLoading=new Promise((res,rej)=>{
+    const s=document.createElement('script')
+    s.src='https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'
+    s.onload=()=>window.JSZip?res():rej(new Error('解析组件加载失败'))
+    s.onerror=()=>rej(new Error('网络不可用，无法加载 docx 解析组件'))
+    document.head.appendChild(s)
+  })
+  return window.__jszipLoading
+}
+async function readDocx(file){
+  await ensureJSZip()
+  const buf=await file.arrayBuffer()
+  const zip=await JSZip.loadAsync(buf)
+  const f=zip.file('word/document.xml')
+  if(!f) throw new Error('不是有效的 .docx 文件')
+  const xml=await f.async('string')
+  return xml.replace(/<\/w:p>/g,'\n').replace(/<w:tab[^>]*\/>/g,'\t').replace(/<w:br[^>]*\/>/g,'\n')
+    .replace(/<[^>]+>/g,'')
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'")
+}
+function readFileText(file){
+  return new Promise((resolve,reject)=>{
+    const n=String(file.name||'').toLowerCase()
+    if(/\.(txt|md|markdown|csv|json|text|log)$/.test(n)){
+      const fr=new FileReader()
+      fr.onload=()=>resolve(String(fr.result||''))
+      fr.onerror=()=>reject(new Error('文件读取失败'))
+      fr.readAsText(file,'utf-8'); return
+    }
+    if(/\.docx$/.test(n)){ readDocx(file).then(resolve,reject); return }
+    reject(new Error('UNSUPPORTED'))
+  })
+}
+function pickFile(multiple,accept){
+  return new Promise(res=>{
+    const inp=document.createElement('input'); inp.type='file'
+    if(multiple) inp.multiple=true
+    if(accept) inp.accept=accept
+    inp.onchange=()=>res([...(inp.files||[])])
+    inp.click()
+  })
+}
+
+/* ==================== 简历文本解析（规则引擎） ==================== */
+const MAJOR_HINT=/设计|艺术|视觉|数字媒体|数媒|环境|产品|建筑|广告|传媒|动画|摄影|美术|文创/
+function parseResumeText(t){
+  const s=String(t||'').replace(/\r/g,''), f={}
+  let x
+  if(x=s.match(/(?:姓\s*名|Name|name)[：: ]*([^\n，,。;；]{2,8})/)) f.name=x[1].trim()
+  if(x=s.match(/学\s*号[：: ]*([A-Za-z0-9]{4,20})/)) f.studentId=x[1].trim()
+  if(x=s.match(/性\s*别[：: ]*([男女])/)) f.gender=x[1]
+  if(x=s.match(/年\s*龄[：: ]*(\d{2})/)) f.age=x[1]
+  if(x=s.match(/(大[一二三四五]|研[一二三四])/)) f.grade=x[1]
+  if(x=s.match(/(?:专\s*业|所学专业|专业方向)[：: ]*([^\n，,。；;]{2,20})/)) f.major=x[1].trim()
+  else if(x=s.match(/([一-龥]{2,10}(?:设计|艺术|媒体|广告|建筑|动画|摄影|美术)专业)/)) f.major=x[1]
+  if(x=s.match(/([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/)) f.email=x[1]
+  if(x=s.match(/(?:手机|电话|联系方式|TEL|Phone)[：: ]*(1[3-9]\d{9})/)) f.phone=x[1]
+  else if(x=s.match(/\b(1[3-9]\d{9})\b/)) f.phone=x[1]
+  if(x=s.match(/(?:微\s*信|WeChat|wechat|WX)[号：: ]*([A-Za-z][-_A-Za-z0-9]{4,20})/)) f.wechat=x[1]
+  const sk=SKILLS.filter(k=>s.includes(k)); if(sk.length) f.skills=sk.slice(0,8)
+  const im=IMPROVE.filter(k=>s.includes(k)); if(im.length) f.improve=im.slice(0,5)
+  const wk=WORK.filter(k=>s.includes(k)); if(wk.length) f.work=wk.slice(0,5)
+  if(x=s.match(/(?:获奖情况|奖项荣誉|荣誉奖项|主要奖项|所获荣誉)[：: ]*([\s\S]{4,200}?)(?=\n\s*\n|\n[一-龥]{2,6}[：:]|$)/)) f.awards=x[1].trim()
+  else{
+    const aw=[]; s.split('\n').forEach(l=>{ l=l.trim()
+      if(l.length>4&&l.length<80&&/(一等奖|二等奖|三等奖|金奖|银奖|铜奖|竞赛|大赛|奖学金|优秀|入选|提名)/.test(l)) aw.push(l) })
+    if(aw.length) f.awards=aw.slice(0,3).join('；')
+  }
+  if(x=s.match(/(?:个人特长|特长与优势|核心优势|自我评价|个人简介)[：: ]*([\s\S]{6,300}?)(?=\n\s*\n|\n[一-龥]{2,6}[：:]|$)/)) f.strengths=x[1].trim()
+  if(x=s.match(/(?:个人陈述|申请陈述|自述|动机)[：: ]*([\s\S]{6,400}?)(?=\n\s*\n|\n[一-龥]{2,6}[：:]|$)/)) f.statement=x[1].trim()
+  return f
+}
+
+/* ==================== 语音输入 ==================== */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+function voiceSupported(){ return !!SR }
+function voiceHint(){
+  if(voiceSupported()) return ''
+  return '（当前浏览器不支持语音识别，建议用 Chrome / Edge 打开；也可用「粘贴简历文本」）'
+}
+function startVoice(el,btn){
+  if(!SR){ toast('当前浏览器不支持语音输入，请手动填写或粘贴文本'); return }
+  const r=new SR(); r.lang='zh-CN'; r.interimResults=false; r.continuous=false
+  if(btn) btn.classList.add('on')
+  r.onresult=e=>{
+    const txt=[...e.results].map(x=>x[0].transcript).join('')
+    if(el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA')){
+      if(el.tagName==='INPUT'&&el.type==='number'){
+        const mm=txt.match(/\d+/)
+        if(mm){ el.value=mm[0]; el.dispatchEvent(new Event('input')); return }
+      }
+      const sep = el.value && !/[，。；;,.!？?]$/.test(el.value) ? '，' : ''
+      el.value = el.value + sep + txt.replace(/[。，,.！!？?]$/,'')
+      el.dispatchEvent(new Event('input'))
+    }
+  }
+  r.onerror=e=>toast('语音识别失败：'+(e.error||'未知错误'))
+  r.onend=()=>{ if(btn) btn.classList.remove('on') }
+  try{ r.start() }catch(e){ if(btn) btn.classList.remove('on'); toast('无法启动麦克风') }
+}
+
+/* ==================== 网页正文抓取（公众号链接） ==================== */
+function stripHtml(h){
+  const d=document.createElement('div')
+  d.innerHTML=String(h||'').replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,'')
+  return (d.innerText||d.textContent||'').replace(/\n{3,}/g,'\n\n').replace(/[ \t]{2,}/g,' ').trim()
+}
+function fetchWithTimeout(url,ms,opt){
+  const ac=(typeof AbortController!=='undefined')?new AbortController():null
+  const t=setTimeout(()=>ac&&ac.abort(),ms||9000)
+  const o=Object.assign({},opt||{})
+  if(ac) o.signal=ac.signal
+  return fetch(url,o).finally(()=>clearTimeout(t))
+}
+async function fetchPage(url){
+  const cands=[
+    ['api.allorigins.win','https://api.allorigins.win/raw?url='+encodeURIComponent(url),false],
+    ['codetabs','https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(url),false],
+    ['corsproxy.io','https://corsproxy.io/?'+encodeURIComponent(url),false],
+    ['r.jina.ai','https://r.jina.ai/'+url,true]
+  ]
+  let last='未知原因'
+  for(const [name,u,isText] of cands){
+    try{
+      const r=await fetchWithTimeout(u,9000)
+      if(!r.ok){ last='代理 '+name+' 返回 HTTP '+r.status; continue }
+      const raw=await r.text()
+      if(!raw||raw.length<60){ last='代理 '+name+' 返回内容为空'; continue }
+      const html=isText?'':raw
+      const text=isText?raw:stripHtml(raw)
+      if(text&&text.length>60) return {html,text,via:name}
+      last='代理 '+name+' 未能提取正文'
+    }catch(e){ last='代理 '+name+' '+(e&&e.name==='AbortError'?'请求超时':'不可用') }
+  }
+  throw new Error(last)
+}
+async function fetchUrlText(url){ return (await fetchPage(url)).text }
+function extractMeta(html){
+  if(!html) return {cover:'',title:''}
+  const get=res=>{ for(const re of res){ const m=html.match(re); if(m&&m[1]) return m[1] } return '' }
+  const cover=get([/property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
+    /content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
+    /itemprop=["']image["'][^>]*content=["']([^"']+)["']/i])
+  const title=get([/property=["']og:title["'][^>]*content=["']([^"']+)["']/i,
+    /<title[^>]*>([^<]+)<\/title>/i,
+    /(?:var\s+)?msg_title\s*=\s*['"]([^'"]+)['"]/])
+  return {cover,title:String(title||'').replace(/\s*[-—|]\s*微信公众平台.*$/,'').trim()}
+}
+function compressImage(file,maxW,q){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader()
+    fr.onload=()=>{
+      const img=new Image()
+      img.onload=()=>{
+        try{
+          const scale=Math.min(1,(maxW||720)/(img.width||maxW||720))
+          const c=document.createElement('canvas')
+          c.width=Math.max(1,Math.round(img.width*scale))
+          c.height=Math.max(1,Math.round(img.height*scale))
+          c.getContext('2d').drawImage(img,0,0,c.width,c.height)
+          res(c.toDataURL('image/jpeg',q||0.72))
+        }catch(e){ rej(new Error('图片处理失败')) }
+      }
+      img.onerror=()=>rej(new Error('无法解析该图片'))
+      img.src=fr.result
+    }
+    fr.onerror=()=>rej(new Error('读取文件失败'))
+    fr.readAsDataURL(file)
+  })
+}
+
+/* ==================== 提交码 / 报名包（跨设备汇总） ==================== */
+const b64e = s => btoa(unescape(encodeURIComponent(s)))
+const b64d = s => decodeURIComponent(escape(atob(String(s).replace(/\s+/g,''))))
+const PKG_PREFIX='APPL1.'
+function packCode(c){
+  const o={}
+  Object.keys(c||{}).forEach(k=>{
+    const v=c[k]
+    if(v===''||v==null) return
+    if(Array.isArray(v)&&!v.length) return
+    if(v&&typeof v==='object'&&!Array.isArray(v)&&!Object.keys(v).length) return
+    o[k]=v
+  })
+  try{ return PKG_PREFIX+b64e(JSON.stringify(o)) }catch(e){ return '' }
+}
+function unpackCode(code){
+  const s=String(code||'')
+  const m=s.match(/APPL1\.([A-Za-z0-9+/=]+)/)
+  if(!m) return null
+  try{ const o=JSON.parse(b64d(m[1])); return (o&&o.name)?o:null }catch(e){ return null }
+}
+function mergeCandidate(c){
+  if(!c||!c.name) return null
+  const i=DB.candidates.findIndex(x=>(x.studentId&&c.studentId&&x.studentId===c.studentId)||x.name===c.name)
+  if(i>=0){ DB.candidates[i]=Object.assign({},DB.candidates[i],c,{_id:DB.candidates[i]._id}); return 'update' }
+  DB.candidates.push(Object.assign({_id:'c_'+Date.now()+Math.random().toString(36).slice(2,6)},c))
+  return 'new'
+}
+function download(name,text,type){
+  const a=document.createElement('a')
+  a.href=URL.createObjectURL(new Blob([text],{type:type||'application/json;charset=utf-8'}))
+  a.download=name; a.click()
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000)
+}
+
+/* ==================== 示例数据 ==================== */
+function mockData(){
+  return NAMES.map((n,i)=>{
+    const has=t=>!(i%8===3 && t==='portfolio') && (t!=='transcript'||i%3===0) && (t!=='statement'||i%4===1)
+    const files={}
+    FILE_TYPES.forEach(ft=>{ if(has(ft.key)) files[ft.key]={name:n+'_'+ft.label+'.pdf',type:ft.key} })
+    return {_id:'id_'+i,name:n,studentId:'2023'+(10000+i),age:19+(i%4),gender:i%2?'女':'男',
+      grade:(i%9===5?'大二':(i%5===0?'研一':'大三')),major:['视觉传达设计','环境设计','产品设计','数字媒体艺术'][i%4],
+      email:'stu'+i+'@qq.com',phone:'138'+String(10000000+i).slice(0,8),
+      strengths:i%3===0?'擅长手绘与视觉叙事，有团队协作经验':'',
+      awards:i%4===0?'全国大学生设计竞赛二等奖；参与省级创新创业项目':'',
+      skills:['平面设计','插画',i%2?'AI辅助设计':'摄影','调研与用户研究'].filter(Boolean),
+      improve:['文旅产品设计','在地文化资源挖掘'],work:['前期调研','视觉设计'],
+      wechat:'wx_'+i,files,source:'mail',favorite:i%7===0,screen:null,
+      portfolioText:PORTFOLIO_TEXT[i%PORTFOLIO_TEXT.length]}
+  })
+}
+
+/* ==================== 项目库与首页 ==================== */
+let pKw='', pFilter='all'
+const d2 = n => String(n).padStart(2,'0')
+
+function parseDeadline(text){
+  const s=String(text||'').replace(/[ \t]/g,'')
+  if(!s) return ''
+  const fmt=(y,m,d)=>y+'-'+d2(+m)+'-'+d2(+d)
+  const pats=[/(20\d{2})年(\d{1,2})月(\d{1,2})日/,/(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})/]
+  const lines=s.split(/[\n。！!；;]/).filter(l=>/截止|截至|报名截止|deadline|ddl/i.test(l))
+  const pool=lines.length?lines.concat([s]):[s]
+  for(const l of pool){
+    for(const p of pats){ const m=l.match(p); if(m) return fmt(m[1],m[2],m[3]) }
+    const m=l.match(/(\d{1,2})月(\d{1,2})[日号]/)
+    if(m){
+      const y=new Date().getFullYear()
+      let cand=fmt(y,m[1],m[2])
+      if(new Date(cand+'T23:59:59')-Date.now() < -60*86400000) cand=fmt(y+1,m[1],m[2])
+      return cand
+    }
+  }
+  return ''
+}
+function parseStart(text){
+  const s=String(text||'').replace(/[ \t]/g,'')
+  if(!s) return ''
+  const fmt=(y,m,d)=>y+'-'+d2(+m)+'-'+d2(+d)
+  const pats=[/(20\d{2})年(\d{1,2})月(\d{1,2})日/,/(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})/]
+  const lines=s.split(/[\n。！!；;]/).filter(l=>/开课|开班|开学|开始|启动|举行|上课|开营|报到|开课时间|开课日期/.test(l))
+  if(!lines.length) return ''
+  const pool=lines
+  const y0=new Date().getFullYear()
+  for(const l of pool){
+    for(const p of pats){ const m=l.match(p); if(m) return fmt(m[1],m[2],m[3]) }
+    const m=l.match(/(\d{1,2})月(\d{1,2})[日号]/)
+    if(m){
+      let cand=fmt(y0,m[1],m[2])
+      if(new Date(cand+'T23:59:59')-Date.now() < -60*86400000) cand=fmt(y0+1,m[1],m[2])
+      return cand
+    }
+  }
+  return ''
+}
+function daysLeft(ddl){
+  if(!ddl) return null
+  const t=new Date(ddl+'T23:59:59')
+  if(isNaN(t)) return null
+  return Math.ceil((t-Date.now())/86400000)
+}
+function ddlTag(p){
+  const d=daysLeft(p.deadline)
+  if(d===null) return ''
+  if(d<0) return '<span class="ddl over">已截止</span>'
+  if(d<=3) return '<span class="ddl hot">仅剩 '+d+' 天</span>'
+  return '<span class="ddl">剩 '+d+' 天</span>'
+}
+function curProject(){
+  if(!DB.applyProject) return null
+  return DB.projects.find(p=>p._id===DB.applyProject)||null
+}
+function projSummary(p){
+  const cr=p.parsed||{}
+  return ['截止 '+(p.deadline||'未设')+(p.start?(' · 开课 '+p.start):''), ((cr.hard||[]).length)+' 条硬条件',
+    ((cr.bonus||[]).length)+' 条加分项', cr.minAdmit?('招 '+cr.minAdmit+' 人'):''].filter(Boolean).join(' · ')
+}
+function coverInner(p){
+  const ph='<div class="ph">'+esc(p.title)+'</div>'
+  return ph + (p.cover ? '<img src="'+esc(p.cover)+'" alt="" referrerpolicy="no-referrer" loading="lazy" data-fallback="1" />' : '')
+}
+const EMPTY_SVG='<svg viewBox="0 0 140 116" xmlns="http://www.w3.org/2000/svg">'+
+  '<ellipse cx="70" cy="100" rx="42" ry="7" fill="#eef0f3"/>'+
+  '<circle cx="56" cy="52" r="27" fill="#EDEBFE" stroke="#6d5efc" stroke-width="3"/>'+
+  '<line x1="76" y1="72" x2="98" y2="94" stroke="#6d5efc" stroke-width="6" stroke-linecap="round"/>'+
+  '<path d="M48 46 q8 -13 16 0" stroke="#6d5efc" stroke-width="3" fill="none" stroke-linecap="round"/>'+
+  '<circle cx="50" cy="48" r="2.4" fill="#3b2a66"/><circle cx="60" cy="48" r="2.4" fill="#3b2a66"/>'+
+  '<path d="M52 56 q4 4 8 0" stroke="#c2685f" stroke-width="2.4" fill="none" stroke-linecap="round"/>'+
+  '<text x="56" y="60" font-size="15" fill="#8b7dff" text-anchor="middle" font-family="sans-serif" font-weight="700">?</text>'+
+  '<path d="M108 38 l1.6 3.2 3.2 .9 -2.4 2.4 .8 3.4 -3.2-1.6 -3.2 1.6 .8-3.4 -2.4-2.4 3.2-.9z" fill="#fbbf24"/>'+
+  '<circle cx="24" cy="34" r="2.6" fill="#22d3ee"/></svg>'
+function projectCard(p,opts){
+  opts=opts||{}
+  const isPicker=!!opts.picker
+  const acts=isPicker
+    ? '<button class="btn btn-primary btn-sm" data-pick="'+p._id+'">选这个项目</button>'
+    : '<button class="btn btn-line btn-sm" data-act="src" data-id="'+p._id+'">详情</button>'+
+      '<button class="btn btn-primary btn-sm" data-act="apply" data-id="'+p._id+'" data-star>立即报名</button>'
+  const cr=p.parsed||{}
+  const req=[].concat(cr.hard||[]).slice(0,2).map(esc).join(' · ')
+  return '<div class="pcard" data-id="'+p._id+'">'+
+    '<div class="cover">'+coverInner(p)+'</div>'+
+    '<div class="body">'+
+      '<div class="t">'+esc(p.title)+'</div>'+
+      '<div class="m">'+esc(p.org||'未注明主办方')+'</div>'+
+      '<div>'+ddlTag(p)+'</div>'+
+      (req?'<div class="req">'+req+'</div>':'')+
+      '<div class="acts">'+acts+'</div>'+
+    '</div></div>'
+}
+function filteredProjects(){
+  const kw=pKw.trim().toLowerCase()
+  let list=DB.projects.slice()
+  if(kw) list=list.filter(p=>[p.title,p.org,p.summary,(p.parsed&&(p.parsed.hard||[]).join(' '))||'']
+    .join(' ').toLowerCase().includes(kw))
+  // 过期项目默认隐藏，仅当筛选=已截止时显示
+  if(pFilter!=='over') list=list.filter(p=>{ const d=daysLeft(p.deadline); return d===null||d>=0 })
+  if(pFilter==='soon') list=list.filter(p=>{ const d=daysLeft(p.deadline); return d!==null&&d>=0&&d<=7 })
+  // 按截止时间由近到远排序
+  list.sort((a,b)=>{
+    const da=daysLeft(a.deadline), db=daysLeft(b.deadline)
+    const va=da===null?1e9:da, vb=db===null?1e9:db
+    if(va!==vb) return va-vb
+    return (a.createdAt||0)-(b.createdAt||0)
+  })
+  return list
+}
+function bindPGrid(){
+  $$('#pGrid img[data-fallback]').forEach(img=>{ img.onerror=()=>{ img.style.display='none' } })
+  $$('#pGrid [data-act]').forEach(b=>{
+    b.onclick=e=>{
+      e.stopPropagation()
+      const p=DB.projects.find(x=>x._id===b.dataset.id)
+      if(!p) return
+      if(b.dataset.act==='apply') applyTo(p)
+      else openSource(p)
+    }
+  })
+  $$('#pGrid .pcard').forEach(c=>{
+    c.onclick=()=>{ const p=DB.projects.find(x=>x._id===c.dataset.id); if(p) openSource(p) }
+  })
+}
+function openSource(p){
+  if(!p.url){ toast('该项目没有填写原文链接'); return }
+  window.open(p.url,'_blank','noopener')
+}
+function applyTo(p){
+  switchView('student'); switchSub('student','pick')
+  selectProject(p._id)          // 进入①并自动解析需求 → 学生点「下一步」再进②填表
+}
+function renderProjects(){
+  const list=filteredProjects()
+  $('#pCount').textContent='（'+list.length+'）'
+  const openList=list.filter(p=>{ const d=daysLeft(p.deadline); return d===null||d>=0 })
+  renderHero(openList.length?openList:list)
+  if(!list.length){
+    $('#pGrid').innerHTML=''
+    const box=$('#pEmpty'); box.classList.remove('hide')
+    box.innerHTML=DB.projects.length
+      ? '没有匹配的项目，换个关键词或筛选条件试试'
+      : '还没有项目。<br>主办方请到「主办方 → ① 项目库」粘贴公众号链接或导入文档，解析后点「保存到项目库」，首页会自动展示。'
+    return
+  }
+  $('#pEmpty').classList.add('hide')
+  $('#pGrid').innerHTML=list.map(p=>projectCard(p)).join('')
+  bindPGrid()
+}
+let heroIdx=0, heroN=0, heroTimer=null
+function heroGo(i,noAuto){
+  heroN=$('#heroTrack').children.length
+  if(!heroN) return
+  heroIdx=(i+heroN)%heroN
+  $('#heroTrack').style.transform='translateX(-'+(heroIdx*100)+'%)'
+  $$('#heroDots .hero-dot').forEach((d,k)=>d.classList.toggle('on',k===heroIdx))
+  if(!noAuto) startHero()
+}
+function startHero(){
+  clearInterval(heroTimer)
+  if(heroN>1) heroTimer=setInterval(()=>heroGo(heroIdx+1,true),5000)
+}
+function renderHero(list){
+  const hero=$('#hero')
+  if(!list.length){ hero.classList.add('hide'); clearInterval(heroTimer); return }
+  hero.classList.remove('hide')
+  const show=list.slice(0,5)
+  $('#heroTrack').innerHTML=show.map(p=>{
+    const d=daysLeft(p.deadline)
+    return '<div class="hero-slide" data-id="'+p._id+'">'+
+      '<div class="hero-ph"><div class="big">'+esc(p.title)+'</div><div class="org">'+esc(p.org||'')+'</div></div>'+
+      (p.cover?'<img src="'+esc(p.cover)+'" alt="" referrerpolicy="no-referrer" loading="lazy" data-fallback="1" />':'')+
+      '<div class="hero-cap"><div class="t">'+esc(p.title)+'</div><div class="m">'+esc(p.org||'')+
+        (d===null?'':(d<0?' · 已截止':' · 剩 '+d+' 天截止'))+'</div></div></div>'
+  }).join('')
+  $('#heroDots').innerHTML=show.map((_,i)=>'<div class="hero-dot'+(i===0?' on':'')+'"></div>').join('')
+  $$('#heroTrack img[data-fallback]').forEach(img=>{ img.onerror=()=>{ img.style.display='none' } })
+  $$('#heroDots .hero-dot').forEach((dot,i)=>{ dot.onclick=()=>heroGo(i) })
+  $$('#heroTrack .hero-slide').forEach((sl,i)=>{ sl.onclick=()=>{
+    const p=DB.projects.find(x=>x._id===sl.dataset.id); if(p) openSource(p) } })
+  heroIdx=0; heroN=show.length
+  $('#heroTrack').style.transform='translateX(0%)'
+  startHero()
+}
+function initHeroGesture(){
+  const hero=$('#hero'); if(!hero) return
+  let sx=0, sy=0, moved=false
+  hero.addEventListener('touchstart',e=>{ sx=e.touches[0].clientX; sy=e.touches[0].clientY; moved=false; clearInterval(heroTimer) },{passive:true})
+  hero.addEventListener('touchmove',e=>{ const dx=e.touches[0].clientX-sx; if(Math.abs(dx)>12) moved=true },{passive:true})
+  hero.addEventListener('touchend',e=>{
+    const dx=(e.changedTouches[0].clientX-sx), dy=(e.changedTouches[0].clientY-sy)
+    if(moved&&Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)){ e.stopPropagation(); heroGo(heroIdx+(dx<0?1:-1)) }
+    else startHero()
+  })
+  let down=false, mx=0
+  hero.addEventListener('mousedown',e=>{ down=true; mx=e.clientX; clearInterval(heroTimer) })
+  window.addEventListener('mouseup',e=>{
+    if(!down) return
+    down=false
+    const dx=e.clientX-mx
+    if(Math.abs(dx)>60){ heroGo(heroIdx+(dx<0?1:-1)) } else startHero()
+  })
+}
+function renderFilters(){
+  const fs=[['all','全部'],['open','进行中'],['soon','7 天内截止'],['over','已截止']]
+  $('#p-filters').innerHTML=fs.map(([k,v])=>'<div class="chip'+(pFilter===k?' on':'')+'" data-f="'+k+'">'+v+'</div>').join('')
+  $$('#p-filters .chip').forEach(c=>c.onclick=()=>{ pFilter=c.dataset.f; renderFilters(); renderProjects() })
+}
+function renderProjList(){
+  const box=$('#projList')
+  if(!box) return
+  $('#projCount').textContent='（'+DB.projects.length+'）'
+  if(!DB.projects.length){ box.innerHTML='<div class="empty">还没有项目。在上方解析招募信息后点「保存到项目库」</div>'; return }
+  box.innerHTML=DB.projects.map(p=>
+    '<div class="list-item"><div class="apbar">'+
+    '<div style="flex:1;min-width:180px"><b>'+esc(p.title)+'</b> '+ddlTag(p)+
+    '<div class="muted" style="font-size:12.5px">'+esc(p.org||'—')+' · '+esc(p.deadline||'未设截止')+'</div></div>'+
+    '<div class="row"><button class="btn btn-line btn-sm" data-popen="'+p._id+'">原文</button>'+
+    '<button class="btn btn-ghost btn-sm" data-pedit="'+p._id+'">编辑</button>'+
+    '<button class="btn btn-ghost btn-sm" data-papply="'+p._id+'">去报名</button>'+
+    '<button class="btn btn-line btn-sm" data-pdel="'+p._id+'">删除</button></div></div></div>').join('')
+  $$('#projList [data-pdel]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.pdel
+    const p=DB.projects.find(x=>x._id===id)
+    if(!confirm('删除项目「'+(p?p.title:'')+'」？首页将不再展示（如需恢复可在本机重新添加）。')) return
+    DB.projects=DB.projects.filter(x=>x._id!==id)
+    if(!Array.isArray(DB.removed)) DB.removed=[]
+    if(!DB.removed.includes(id)) DB.removed.push(id)
+    if(DB.applyProject===id) DB.applyProject=null
+    save(); renderProjects(); renderProjList(); renderApplyProject(); toast('已删除')
+  })
+  $$('#projList [data-popen]').forEach(b=>b.onclick=()=>{ const p=DB.projects.find(x=>x._id===b.dataset.popen); if(p) openSource(p) })
+  $$('#projList [data-pedit]').forEach(b=>b.onclick=()=>editProject(b.dataset.pedit))
+  $$('#projList [data-papply]').forEach(b=>b.onclick=()=>{ const p=DB.projects.find(x=>x._id===b.dataset.papply); if(p) applyTo(p) })
+}
+function renderAiProjList(){
+  const box=$('#aiProjList')
+  if(!box) return
+  if(!DB.projects.length){ box.innerHTML='<div class="empty">还没有项目，先在「① 项目库」新增</div>'; return }
+  box.innerHTML=DB.projects.map(p=>projectCard(p,{picker:true})).join('')
+  $$('#aiProjList [data-pick]').forEach(b=>b.onclick=()=>{
+    const p=DB.projects.find(x=>x._id===b.dataset.pick)
+    if(!p) return
+    DB.applyProject=p._id; save(); renderApplyProject()
+    toast('已选择项目：「'+p.title+'」，导入 / 筛选将作用于其申请人')
+  })
+}
+
+/* ==================== 按项目定制报名表单 ==================== */
+function buildFormSchema(p){
+  if(!p) return []
+  const cr=p.parsed||{}
+  const hard=(cr.hard||[]).join(' '), bonus=(cr.bonus||[]).join(' ')
+  const F=[]
+  const pick=re=>{ const m=(hard+' '+bonus).match(re); return m?m[0]:'' }
+  if(/每周可投入|每周投入|投入\s*\d+\s*小时/.test(hard))
+    F.push({key:'hours',label:'每周可投入时长（小时）',type:'number',ph:'8',req:true,tip:'招募要求：'+(pick(/每周可投入[^。；;，]*/)||'每周需保证投入时间')})
+  if(/到岗|到岗时间|开始时间/.test(hard))
+    F.push({key:'onboard',label:'可到岗时间',type:'text',ph:'2026年10月',req:true})
+  if(/专业/.test(hard))
+    F.push({key:'majorRel',label:'你的专业 / 经历与本项目的相关性说明',type:'textarea',ph:'例：视觉传达专业，做过 2 个在地文化文创项目'})
+  if(/作品集/.test(bonus))
+    F.push({key:'portfolioNote',label:'作品集简介（类别 / 代表作 / 在线链接）',type:'textarea',ph:'例：插画 3 组 + 品牌设计 1 组，链接：…'})
+  if(/项目|实习/.test(bonus))
+    F.push({key:'experience',label:'相关项目或实习经历',type:'textarea',ph:'例：2025 年参与 XX 文旅项目，负责视觉设计'})
+  if(/AI/.test(bonus))
+    F.push({key:'aiTools',label:'掌握的 AI 辅助设计工具',type:'text',ph:'Midjourney / Stable Diffusion / ComfyUI'})
+  if(F.length) F.push({key:'motivation',label:'报名动机与期望收获',type:'textarea',ph:'为什么想参加这个项目？想提升什么？'})
+  return F
+}
+function materialReqs(p){
+  const cr=(p&&p.parsed)||{}
+  const txt=[(cr.hard||[]).join(' '),(cr.bonus||[]).join(' ')].join(' ')
+  return FILE_TYPES.map(m=>{
+    let must=(m.key==='form'||m.key==='portfolio')
+    if(m.key==='transcript'&&/成绩/.test(txt)) must=true
+    if(m.key==='resume'&&/简历/.test(txt)) must=true
+    if(m.key==='statement'&&/陈述|动机/.test(txt)) must=true
+    return {key:m.key,label:m.label,must}
+  })
+}
+function renderDynForm(p){
+  const box=$('#dynFields'); if(!box) return
+  const F=buildFormSchema(p)
+  if(!F.length){ box.innerHTML=''; return }
+  box.innerHTML='<div class="card"><div class="dyn"><h2>项目专属信息</h2>'+
+    '<div class="sub">以下字段根据「'+esc(p.title)+'」的招募要求自动生成，带 * 为必填</div></div>'+
+    F.map(f=>'<div style="margin-top:12px"><label>'+esc(f.label)+(f.req?' *':'')+'</label>'+
+      (f.type==='textarea'
+        ? '<textarea data-dyn="'+f.key+'" placeholder="'+esc(f.ph||'')+'"></textarea>'
+        : '<input data-dyn="'+f.key+'" type="'+(f.type==='number'?'number':'text')+'" placeholder="'+esc(f.ph||'')+'" />')+
+      (f.tip?'<div class="muted" style="font-size:12.5px;margin-top:4px">'+esc(f.tip)+'</div>':'')+
+      '</div>').join('')+'</div>'
+}
+function renderMaterials(p){
+  const box=$('#dynMaterials'); if(!box) return
+  if(!p){ box.innerHTML=''; return }
+  const reqs=materialReqs(p)
+  box.innerHTML='<label>本项目材料要求</label><div class="matreq">'+reqs.map(r=>{
+    const got=pickedFiles.some(n=>r.key==='portfolio'?/作品集|portfolio/i.test(n):new RegExp(r.label).test(n))
+    return '<span class="mchip '+(got?'got':(r.must?'must':''))+'">'+esc(r.label)+(r.must?'（必备）':'（选交）')+(got?' ✓':'')+'</span>'
+  }).join('')+'</div>'
+}
+function collectDyn(){
+  const F=buildFormSchema(curProject())
+  const out={}, miss=[]
+  F.forEach(f=>{
+    const el=$('#dynFields [data-dyn="'+f.key+'"]')
+    const v=el?el.value.trim():''
+    if(v) out[f.key]=v
+    if(f.req&&!v) miss.push(f.label)
+  })
+  return {out,miss}
+}
+function renderApplyProject(){
+  const card=$('#applyProjCard'); if(!card) return
+  const p=curProject()
+  if(!p){
+    card.classList.add('hide'); renderDynForm(null); renderMaterials(null); renderMatchTip(); return
+  }
+  card.classList.remove('hide')
+  const d=daysLeft(p.deadline)
+  $('#apTitle').textContent=p.title
+  $('#apMeta').innerHTML=[p.org||'未注明主办方',
+    p.deadline?('报名截止 '+p.deadline+(d===null?'':(d<0?'（已截止）':'（剩 '+d+' 天）'))):'未设截止时间',
+    p.start?('开课 '+p.start):'',
+    ((p.parsed&&p.parsed.minAdmit)?('招 '+p.parsed.minAdmit+' 人'):'')].filter(Boolean).join(' · ')
+  renderPickParse()
+  renderDynForm(p); renderMaterials(p); renderMatchTip()
+}
+/* 取某个项目的招募要求解析结果：优先用项目已存的 parsed，否则用正文重新解析 */
+function projectParsed(p){
+  if(!p) return {}
+  if(p.parsed&&((p.parsed.hard||[]).length||(p.parsed.bonus||[]).length||p.parsed.minAdmit)) return p.parsed
+  return parseRecruit([p.title,p.org,p.summary].filter(Boolean).join('\n'))
+}
+/* 学生 ①：选中项目后自动渲染「招募要求解析」（不用学生手动上传任何链接） */
+function renderPickParse(){
+  const box=$('#pickParseResult')
+  const eq=$('#apReqs'); if(eq) eq.innerHTML=''    // 统一在这里展示，避免两处重复
+  if(!box) return
+  const p=curProject()
+  if(!p){ box.innerHTML=''; return }
+  const cr=projectParsed(p)
+  const L=(a,d)=>(a&&a.length)?a.map(esc).join('<br>'):('<span class="muted">'+(d||'—')+'</span>')
+  const mats=materialReqs(p)
+  box.innerHTML='<div class="banner ok" style="margin-bottom:10px">🎯 已为「'+esc(p.title)+'」解析招募要求，看清条件再报名～</div>'+
+    '<div class="kv"><span>🔒 硬性条件</span><span>'+L(cr.hard,'主办方没设硬性条件')+'</span></div>'+
+    '<div class="kv"><span>➕ 加分项</span><span>'+L(cr.bonus,'没有额外的加分要求')+'</span></div>'+
+    '<div class="kv"><span>🚫 排除项</span><span>'+L(cr.exclude,'没有排除项')+'</span></div>'+
+    (cr.minAdmit?'<div class="kv"><span>👥 招募人数</span><span><b>'+cr.minAdmit+'</b> 人</span></div>':'')+
+    (mats.length?'<div class="kv"><span>📎 需要准备的材料</span><span>'+
+      mats.map(m=>esc(m.label)+(m.must?'（必交）':'（选交）')).join('<br>')+'</span></div>':'')+
+    '<div class="row" style="margin-top:14px">'+
+      '<button class="btn btn-primary" id="btnGoFill" data-star>下一步：去 ② 智能填表 →</button>'+
+      '<button class="btn btn-line btn-sm" id="btnOpenSrc2">查看招募原文 ↗</button>'+
+    '</div>'
+  const g=$('#btnGoFill'); if(g) g.onclick=()=>{ switchSub('student','fill'); window.scrollTo({top:0,behavior:'smooth'}) }
+  const o=$('#btnOpenSrc2'); if(o) o.onclick=()=>openSource(p)
+}
+/* 学生 ①：选项目 → 自动解析需求并跳到解析结果 */
+function selectProject(id){
+  const p=DB.projects.find(x=>x._id===id)
+  if(!p) return
+  DB.applyProject=id
+  DB.stuRecruit={text:[p.title,p.org,p.summary].filter(Boolean).join('\n'),
+    name:p.title,at:Date.now(),parsed:projectParsed(p)}
+  save()
+  renderApplyProject()                 // 内部会调用 renderPickParse()
+  toast('已锁定「'+p.title+'」，招募要求已解析 ✨')
+  setTimeout(()=>{ const t=$('#pickParseResult'); if(t&&t.scrollIntoView) t.scrollIntoView({behavior:'smooth',block:'center'}) },110)
+}
+
+/* ==================== 界面：学生端 ==================== */
+const sel={skills:new Set(),improve:new Set(),work:new Set()}
+const autoMark=new Set()          // 由简历/语音自动识别出的选项（青色显示）
+let pickedFiles=[]
+let lastPkg=null                  // 最近一次提交生成的报名包
+let stagedText=''                 // 学生上传/粘贴的招募需求原文（需点「解析」才显示）
+function renderChips(){
+  const mk=(host,arr,key)=>{ const box=$(host); box.innerHTML=''
+    arr.forEach(v=>{ const d=document.createElement('div')
+      d.className='chip'+(sel[key].has(v)?' on':'')+(autoMark.has(key+'|'+v)?' auto':'')
+      d.textContent=v
+      d.onclick=()=>{
+        if(sel[key].has(v)){ sel[key].delete(v) } else { sel[key].add(v) }
+        autoMark.delete(key+'|'+v)
+        d.classList.toggle('on'); d.classList.remove('auto')
+      }
+      box.appendChild(d) }) }
+  mk('#c-skills',SKILLS,'skills'); mk('#c-improve',IMPROVE,'improve'); mk('#c-work',WORK,'work')
+}
+function renderPicked(){
+  $('#fileList').innerHTML = pickedFiles.length ? pickedFiles.map((f,i)=>
+    '<div class="filerow"><span>'+esc(f)+'</span><button class="btn btn-line btn-sm" data-i="'+i+'">移除</button></div>').join('')
+    : '<div class="empty" style="padding:12px 0">未选择文件</div>'
+  $$('#fileList button').forEach(b=>b.onclick=()=>{ pickedFiles.splice(+b.dataset.i,1); renderPicked() })
+  if(typeof renderMatchTip==='function') renderMatchTip()
+  if(typeof renderMaterials==='function') renderMaterials(curProject())
+}
+$('#pickFiles').onclick=()=>{
+  const inp=document.createElement('input'); inp.type='file'; inp.multiple=true
+  inp.onchange=()=>{ [...inp.files].forEach(f=>pickedFiles.push(f.name)); renderPicked() }
+  inp.click()
+}
+$('#btnReset').onclick=()=>{
+  $$('#view-student input,#view-student textarea').forEach(e=>{ if(!e.readOnly) e.value='' })
+  sel.skills.clear();sel.improve.clear();sel.work.clear();autoMark.clear();pickedFiles=[]
+  renderChips();renderPicked();renderMatchTip()
+}
+$('#btnSubmit').onclick=()=>{
+  const v=id=>$(id).value.trim()
+  if(!v('#f-name')||!v('#f-studentId')||!v('#f-email')||!v('#f-phone')){ toast('请填写姓名/学号/邮箱/手机号'); return }
+  const dyn=collectDyn()
+  if(dyn.miss.length){ toast('请填写项目专属必填项：'+dyn.miss.join('、')); return }
+  const files={}
+  pickedFiles.forEach(name=>{ const ft=FILE_TYPES.find(t=>t.words.test(name)); if(ft) files[ft.key]={name,type:ft.key} })
+  const p=curProject()
+  const rec={_id:'c_'+Date.now()+Math.random().toString(36).slice(2,6),
+    name:v('#f-name'),studentId:v('#f-studentId'),age:v('#f-age'),
+    gender:v('#f-gender'),grade:v('#f-grade'),major:v('#f-major'),email:v('#f-email'),phone:v('#f-phone'),
+    wechat:v('#f-wechat'),strengths:v('#f-strengths'),awards:v('#f-awards'),statement:'',
+    skills:[...sel.skills],improve:[...sel.improve],work:[...sel.work],files,source:'student',
+    favorite:false,screen:null,portfolioText:'',submittedAt:new Date().toISOString(),
+    projectId:p?p._id:'',projectTitle:p?p.title:'',projectFields:dyn.out}
+  DB.candidates.push(rec); save()
+  if(p){
+    const missMat=materialReqs(p).filter(r=>r.must&&!files[r.key]).map(r=>r.label)
+    if(missMat.length) toast('已提交，但缺少必备材料：'+missMat.join('、')+'，可能影响初筛')
+  }
+  lastPkg=rec
+  $('#receiptCode').value=packCode(rec)
+  $('#receiptTip').innerHTML='已保存到本机（本机共 '+DB.candidates.length+' 条）。注意：<b>换设备／换浏览器不会自动同步</b>，'+
+    (DB.orgEmail?'主办方已开启邮箱直达 —— 直接点「📧 一键发给主办方」最省事；也可以复制提交码或下载报名包发给主办方。'
+                :'请把下方提交码复制发给主办方，或直接点「📧 一键发给主办方」（需主办方先设置接收邮箱），也可以下载报名包交给主办方一键导入。')
+  $('#submitReceipt').classList.remove('hide')
+  toast('提交成功，已保存到本机'); $('#btnReset').click(); renderCandidates()
+  setTimeout(()=>$('#submitReceipt').scrollIntoView({behavior:'smooth',block:'center'}),120)
+}
+$('#btnCopyCode').onclick=()=>{
+  const t=$('#receiptCode').value
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(()=>toast('提交码已复制，发给主办方即可')).catch(()=>toast('复制失败，请手动全选复制')) }
+  else { $('#receiptCode').select(); toast('请按 Ctrl+C 复制') }
+}
+/* 学生提交后：一键邮件直达主办方（免去私下索取提交码） */
+$('#btnMailTo').onclick=()=>{
+  const mail=String(DB.orgEmail||'').trim()
+  if(!mail){
+    toast('主办方还没设置接收邮箱，请复制下方提交码手动发送')
+    try{ $('#receiptCode').select() }catch(e){}
+    return
+  }
+  const p=curProject(), k=lastPkg||{}
+  const subject=encodeURIComponent('报名提交｜'+(k.name||'申请人')+(p?('｜'+p.title):''))
+  const body=encodeURIComponent(
+    (p?('项目名称：'+p.title+'\n'):'')+
+    '姓名：'+(k.name||'')+'\n'+
+    '学号：'+(k.studentId||'')+'\n'+
+    '专业 / 年级：'+(k.major||'')+' / '+(k.grade||'')+'\n'+
+    '邮箱：'+(k.email||'')+'\n'+
+    '手机号：'+(k.phone||'')+'\n\n'+
+    '—— 以下提交码请勿修改，主办方在系统里粘贴即可一键导入 ——\n'+
+    ($('#receiptCode')?$('#receiptCode').value:'')+'\n')
+  window.location.href='mailto:'+mail+'?subject='+subject+'&body='+body
+  starBurstAt($('#btnMailTo'),0)
+  toast('已打开邮件客户端，确认发送即直达主办方邮箱')
+}
+$('#btnDownloadPkg').onclick=()=>{
+  if(!lastPkg){ toast('没有可导出的报名包'); return }
+  download('报名_'+(lastPkg.name||'申请人')+'_'+(lastPkg.studentId||'')+'.json',JSON.stringify(lastPkg,null,2))
+  toast('已下载报名包')
+}
+/* —— 报名查询：柔化文案 + 星星跳跃特效 —— */
+function starBurstAt(el,dy){
+  if(!el||typeof starBurst!=='function') return
+  const r=el.getBoundingClientRect()
+  starBurst(r.left+r.width/2, r.top+(dy==null?44:dy))
+}
+function qCard(cls,emoji,title,desc){
+  return '<div class="banner '+cls+'" style="margin-top:14px;text-align:center;padding:16px 14px;line-height:1.75">'+
+    '<div style="font-size:34px;line-height:1;margin-bottom:8px">'+emoji+'</div>'+
+    '<div style="font-weight:800;font-size:17px;margin-bottom:6px">'+title+'</div>'+
+    '<div style="font-weight:500;font-size:14px">'+desc+'</div></div>'
+}
+function qTierTag(s){
+  const t=s.tier
+  return '<span class="tag '+(t==='推荐'?'tag-ok':t==='待定'?'tag-warn':'tag-err')+'">'+t+(s.fallback?'（兜底）':'')+'</span>'
+}
+function qContact(c){
+  const p=DB.projects.find(x=>x._id===c.projectId)
+  if(!p) return ''
+  return '<div style="margin-top:8px;font-size:13px">📇 联系：<b>'+esc(p.org||'主办方')+'</b>'+
+    (p.url?'　<a href="'+esc(p.url)+'" target="_blank" rel="noopener">查看招募原文 ↗</a>':'')+'</div>'
+}
+function qReason(c,label){
+  return c.screen&&c.screen.reason
+    ? '<div style="margin-top:10px;text-align:left"><label>'+label+'</label>'+
+      '<div class="muted" style="font-size:13.5px">'+esc(c.screen.reason)+'</div></div>'
+    : ''
+}
+$('#btnQuery').onclick=()=>{
+  const n=$('#q-name').value.trim(), s=$('#q-sid').value.trim()
+  const box=$('#queryResult'); if(!box) return
+  const done=html=>{
+    box.innerHTML=html
+    const a=$('#btnGoFillTab'); if(a) a.onclick=()=>{ switchSub('student','fill'); window.scrollTo({top:0,behavior:'smooth'}) }
+    const b=$('#btnGoPickTab'); if(b) b.onclick=()=>{ switchSub('student','pick'); window.scrollTo({top:0,behavior:'smooth'}) }
+    starBurstAt(box,50)
+  }
+  if(!n||!s){
+    done(qCard('info','🦉','两个都要填哦','姓名和学号就像一双筷子 🥢 少一根可夹不起结果～'))
+    return
+  }
+  const c=DB.candidates.find(x=>x.name===n&&x.studentId===s)
+  if(!c){
+    const near=DB.candidates.some(x=>x.name===n)||DB.candidates.some(x=>x.studentId===s)
+    done(qCard('info','🙈','咦？这里还没有你的报名记录',
+      (near?'找到了名字或学号相近的记录，但两项对不上，再核对一下是不是填反了？<br>':'')+
+      '多半是 <b>还没提交</b> 哦～先去「② 智能填表与上传材料」把报名交上来吧 ✨'+
+      '<div style="margin-top:10px"><button class="btn btn-primary btn-sm" id="btnGoPickTab">去挑个项目报名 →</button></div>'))
+    return
+  }
+  const detail='<div style="margin-top:12px">'+
+    kv('姓名',c.name)+kv('学号',c.studentId)+
+    kv('专业 / 年级',(c.major||'-')+' / '+(c.grade||'-'))+
+    kv('报名项目',c.projectTitle||'—')+
+    kv('提交时间',String(c.submittedAt||'—').replace('T',' ').slice(0,19))+
+    kv('来源',c.source==='mail'?'邮件导入':'网页直传')+
+    (c.screen?kv('初筛结果',qTierTag(c.screen)):'')+
+    (c.favorite?kv('心仪','<span class="tag tag-ok">已标记</span>'):'')+'</div>'
+  if(!c.screen){
+    done(qCard('ok','⏳','报名成功啦，请再等一等哦～',
+      '你的材料主办方正在翻看，<b>初筛结果还在加载中</b> ✨<br>先去喝杯奶茶 🧋 晚点再来瞄一眼～')+detail)
+    return
+  }
+  const t=c.screen.tier
+  if(t==='推荐'){
+    done(qCard('ok','🎉','恭喜你！你被录取啦！',
+      '主办方对你很满意～请尽快 <b>联系负责老师</b> 确认后续安排 🌟'+qContact(c)+qReason(c,'录取评语')+
+      '<div style="margin-top:10px"><button class="btn btn-primary btn-sm" id="btnGoFillTab">回去看看我的报名信息 →</button></div>')+detail)
+  }else if(t==='待定'){
+    done(qCard('warn','🤔','收到啦，你现在排在「待定区」',
+      '报名是 <b>成功提交</b> 的，只是这轮排在候补里。<br>别灰心 🍀 保持电话畅通，随时可能被捞起来！'+qContact(c)+qReason(c,'待定原因'))+detail)
+  }else{
+    done(qCard('err','🍀','这次没能上岸，但你真的很棒',
+      '报名记录我们已经妥妥收下了。<br>招募名额有限，这次擦肩而过没关系 —— <b>下次活动我们还等你</b> 💪'+
+      qContact(c)+qReason(c,'本次反馈'))+detail)
+  }
+}
+const kv=(k,v)=>'<div class="kv"><span>'+k+'</span><span>'+v+'</span></div>'
+
+/* ==================== 学生端：招募需求 / 智能填表 / 语音 ==================== */
+const FILL_LABEL={name:'姓名',studentId:'学号',age:'年龄',gender:'性别',grade:'年级',major:'专业',
+  email:'邮箱',phone:'手机号',wechat:'微信号',strengths:'特长优势',awards:'奖项成果',
+  skills:'专业技能',improve:'提升方向',work:'承担工作'}
+function currentRecruit(){
+  const p=curProject()
+  if(p) return {text:p.summary||'',criteria:(p.parsed||parseRecruit('')),name:p.title}
+  return DB.stuRecruit||DB.recruit||null
+}
+function recruitCriteria(rc){ return rc ? (rc.criteria||rc.parsed||parseRecruit(rc.text||'')) : null }
+
+function renderRecruitBrief(){
+  const box=$('#recruitBrief'); if(!box) return
+  const rc=DB.stuRecruit
+  if(!rc){
+    box.innerHTML='<div class="banner">尚未解析招募需求。上传或粘贴需求后，点上方「解析招募要求」即可在此查看硬性条件、加分项与招募人数。</div>'
+    return
+  }
+  const p=recruitCriteria(rc)||{}
+  const title=rc.name||((rc.text||'').split('\n').map(x=>x.trim()).find(Boolean))||'自定义招募需求'
+  const L=(a,d)=>(a&&a.length)?a.map(esc).join('<br>'):(d||'—')
+  box.innerHTML='<div class="banner ok">已载入招募需求：'+esc(String(title).slice(0,40))+(rc.name?'（'+esc(rc.name)+'）':'')+'</div>'+
+    '<div class="kv"><span>硬条件</span><span>'+L(p.hard)+'</span></div>'+
+    '<div class="kv"><span>加分项</span><span>'+L(p.bonus)+'</span></div>'+
+    '<div class="kv"><span>排除项</span><span>'+L(p.exclude)+'</span></div>'+
+    (p.minAdmit?'<div class="kv"><span>招募人数</span><span>'+p.minAdmit+' 人</span></div>':'')
+}
+function renderMatchTip(){
+  const box=$('#matchTip'); if(!box) return
+  const p=curProject()
+  const cr=p?p.parsed:(DB.stuRecruit&&DB.stuRecruit.parsed)
+  if(!cr){ box.innerHTML=''; return }
+  const hard=(cr.hard||[]).join(' ')
+  const tips=[]
+  const grade=($('#f-grade')&&$('#f-grade').value)||''
+  const m=hard.match(/([三四五])年级及以上|大([三四五])及以上|大([三四五])以上/)
+  if(m&&grade){
+    const g=m[1]||m[2]
+    const need={'三':3,'四':4,'五':5}[g]||3
+    const gy=gradeYear(grade)
+    if(gy!==null&&gy<need) tips.push(['err','年级不满足招募要求：需大'+g+'及以上，你填的是「'+grade+'」'])
+    else if(gy!==null) tips.push(['ok','年级符合要求（'+grade+'）'])
+  }
+  const major=(($('#f-major')&&$('#f-major').value)||'').trim()
+  if(/专业/.test(hard)&&major){
+    if(MAJOR_HINT.test(major)) tips.push(['ok','专业「'+major+'」与招募方向匹配'])
+    else tips.push(['warn','专业「'+major+'」不在设计学类常见范围内，建议在个人陈述里说明相关性'])
+  }
+  const miss=[]
+  if(!pickedFiles.some(n=>/报名|申请表|form/i.test(n))) miss.push('报名表')
+  if(!pickedFiles.some(n=>/作品集|portfolio/i.test(n))) miss.push('作品集')
+  if(miss.length) tips.push(['warn','材料待补：'+miss.join('、')+'（缺失会被判为材料不齐，直接影响初筛）'])
+  box.innerHTML=tips.map(t=>'<div class="banner '+t[0]+'" style="margin:12px 0 0">'+esc(t[1])+'</div>').join('')
+}
+function applyFill(f){
+  const map={name:'#f-name',studentId:'#f-studentId',age:'#f-age',gender:'#f-grade',grade:'#f-grade',
+    major:'#f-major',email:'#f-email',phone:'#f-phone',wechat:'#f-wechat',strengths:'#f-strengths',awards:'#f-awards'}
+  const done=[]
+  Object.keys(map).forEach(k=>{
+    const v=f[k]; if(v==null||String(v).trim()==='') return
+    const el=$(map[k]); if(!el) return
+    if(el.tagName==='SELECT'){
+      const opt=[...el.options].find(o=>o.value===String(v)||o.text===String(v))
+      if(!opt) return
+      el.value=opt.value
+    }else el.value=String(v).trim()
+    done.push(k)
+  })
+  ;[['skills',SKILLS],['improve',IMPROVE],['work',WORK]].forEach(pair=>{
+    const k=pair[0], allow=pair[1]
+    ;(f[k]||[]).forEach(v=>{ if(allow.includes(v)){ sel[k].add(v); autoMark.add(k+'|'+v) } })
+    if((f[k]||[]).length) done.push(k)
+  })
+  renderChips(); renderMatchTip()
+  return done
+}
+function fillReport(done,src){
+  if(!done.length){ $('#fillStat').innerHTML='<span style="color:var(--danger)">未能从'+src+'中识别出字段，请手动填写或检查内容是否为纯文本</span>'; return }
+  $('#fillStat').innerHTML='已从'+src+'识别并填充 <b>'+done.length+'</b> 项：'+
+    done.map(k=>'<span class="hl">'+esc(FILL_LABEL[k]||k)+'</span>').join('、')+'　请逐项校对后再提交'
+}
+/* —— 招募需求：上传/粘贴先暂存，点「解析」才显示 —— */
+$('#btnPickRecruitDoc').onclick=async()=>{
+  const [f]=await pickFile(false,'.txt,.md,.docx,.json,.csv')
+  if(!f) return
+  try{
+    const t=await readFileText(f)
+    if(!t.trim()){ toast('文件里没有文本内容'); return }
+    stagedText=t
+    $('#recruitBrief').innerHTML='<div class="banner info">已载入「'+esc(f.name)+'」，点「解析招募要求」查看硬性条件与招募人数。</div>'
+    toast('已载入需求文件，点解析查看')
+  }catch(e){
+    toast(e.message==='UNSUPPORTED'?'暂不支持该文件类型（PDF / 图片请复制文字后点「粘贴需求文本」' : ('读取失败：'+e.message))
+  }
+}
+$('#btnPasteRecruit').onclick=()=>{ $('#recruitPaste').classList.toggle('hide'); $('#recruitPasteRow').classList.toggle('hide') }
+$('#btnApplyRecruit').onclick=()=>{
+  const t=$('#recruitPaste').value.trim()
+  if(!t){ toast('请先粘贴需求文本'); return }
+  stagedText=t
+  $('#recruitBrief').innerHTML='<div class="banner info">已暂存粘贴文本，点「解析招募要求」查看硬性条件与招募人数。</div>'
+}
+$('#btnParseReq').onclick=()=>{
+  if(stagedText&&stagedText.trim()){
+    DB.stuRecruit={text:stagedText,name:'自定义需求',at:Date.now(),parsed:parseRecruit(stagedText)}
+    save()
+  }
+  if(!DB.stuRecruit){ toast('请先上传或粘贴招募需求，或选择一个已有项目'); return }
+  renderRecruitBrief(); renderMatchTip()
+  toast('已解析招募要求')
+}
+/* —— 主页里没有的项目（选填区）：折叠开关 + 抓取公众号链接 —— */
+$('#btnToggleCustom').onclick=()=>{
+  const box=$('#customProjBox'); if(!box) return
+  const opened=!box.classList.contains('hide')
+  box.classList.toggle('hide')
+  $('#btnToggleCustom').textContent=opened?'主页里没有我要报的项目，我来上传链接':'收起（其实大多数同学用不到）'
+  if(!opened){ const u=$('#stu-url'); if(u) u.focus() }
+}
+$('#btnFetchStuUrl').onclick=async()=>{
+  const url=$('#stu-url').value.trim()
+  if(!url){ toast('请先粘贴招募链接'); return }
+  if(!/^https?:\/\//i.test(url)){ toast('请填写完整链接（以 http/https 开头）'); return }
+  $('#stuUrlStat').innerHTML='<span class="muted">正在抓取正文（依次尝试公共代理，约 10 秒）…</span>'
+  try{
+    const pg=await fetchPage(url)
+    stagedText=pg.text
+    $('#recruitBrief').innerHTML='<div class="banner info">已抓取 '+pg.text.length+' 字并暂存，点「解析招募要求」查看硬性条件与招募人数。</div>'
+    $('#stuUrlStat').innerHTML='<span style="color:var(--success)">抓取成功（代理：'+esc(pg.via)+'），已暂存正文，请点下方「解析招募要求」。</span>'
+    toast('抓取成功，点「解析招募要求」查看')
+  }catch(e){
+    $('#stuUrlStat').innerHTML='<span style="color:var(--danger)">自动抓取失败（'+esc(e.message)+
+      '）：浏览器同源策略会拦截跨域读取。请在新标签页打开文章，全选复制正文后点「粘贴需求文本」，再点「解析招募要求」。</span>'
+  }
+}
+/* —— 简历 / 语音 —— */
+$('#btnResume').onclick=async()=>{
+  const [f]=await pickFile(false,'.txt,.md,.docx,.json,.csv')
+  if(!f) return
+  try{
+    const t=await readFileText(f)
+    const done=applyFill(parseResumeText(t))
+    fillReport(done,'简历「'+f.name+'」')
+    toast(done.length?'已填充 '+done.length+' 项':'未能识别，请手动填写')
+  }catch(e){
+    toast(e.message==='UNSUPPORTED'?'简历为 PDF / 图片时无法直接识别，请点「粘贴简历文本」' : ('读取失败：'+e.message))
+  }
+}
+$('#btnPasteResume').onclick=()=>{ $('#resumePaste').classList.toggle('hide'); $('#resumePasteRow').classList.toggle('hide') }
+$('#btnApplyResume').onclick=()=>{
+  const t=$('#resumePaste').value.trim()
+  if(!t){ toast('请先粘贴简历内容'); return }
+  const done=applyFill(parseResumeText(t))
+  fillReport(done,'粘贴的简历文本')
+  toast(done.length?'已填充 '+done.length+' 项':'未能识别，请手动填写')
+}
+function voiceFillAll(){
+  if(!SR){ toast('当前浏览器不支持语音识别，请点「粘贴简历文本」'); return }
+  const btn=$('#btnVoiceAll')
+  let acc=''
+  const r=new SR(); r.lang='zh-CN'; r.continuous=true; r.interimResults=true
+  btn.classList.add('rec'); btn.textContent='正在聆听…（说完点停止）'
+  btn.onclick=()=>{ try{ r.stop() }catch(e){} }
+  r.onresult=e=>{ acc=[...e.results].map(x=>x[0].transcript).join(''); $('#fillStat').textContent='识别中：'+acc.slice(-50) }
+  r.onerror=e=>toast('语音识别失败：'+(e.error||'未知错误'))
+  r.onend=()=>{
+    btn.classList.remove('rec'); btn.textContent='语音快速填表'; btn.onclick=voiceFillAll
+    if(!acc.trim()){ toast('没有听到内容，请再试一次'); return }
+    const done=applyFill(parseResumeText(acc))
+    fillReport(done,'语音口述')
+    toast(done.length?'已填充 '+done.length+' 项':'未识别到有效字段')
+  }
+  try{ r.start() }catch(e){ btn.classList.remove('rec'); btn.textContent='语音快速填表'; btn.onclick=voiceFillAll; toast('无法启动麦克风') }
+}
+function addMic(el,isTa){
+  const host=el.parentElement; if(!host||host.querySelector('.mic')) return
+  host.style.position='relative'
+  if(!isTa) el.style.paddingRight='34px'
+  const b=document.createElement('button'); b.type='button'; b.className='mic'; b.title='语音输入'
+  b.textContent='🎤'
+  if(isTa){ b.style.top='10px'; b.style.right='8px'; b.style.transform='none' }
+  b.onclick=e=>{ e.preventDefault(); startVoice(el,b) }
+  host.appendChild(b)
+}
+function injectMics(){
+  $$('#view-student input[id^="f-"]').forEach(el=>{ if(el.type!=='file') addMic(el,false) })
+  ;['#f-strengths','#f-awards'].forEach(s=>{ const el=$(s); if(el) addMic(el,true) })
+}
+
+/* ==================== 界面：主办方端 ==================== */
+let editingId=null
+$('#btnImportRecruitDoc').onclick=async()=>{
+  const [f]=await pickFile(false,'.txt,.md,.docx,.json,.csv')
+  if(!f) return
+  try{
+    const t=await readFileText(f)
+    if(!t.trim()){ toast('文件里没有文本内容'); return }
+    $('#r-text').value=t
+    $('#urlStat').innerHTML='<span style="color:var(--success)">已导入 '+esc(f.name)+'（'+t.length+' 字）</span>'
+    $('#btnParse').click()
+  }catch(e){
+    toast(e.message==='UNSUPPORTED'?'暂不支持该文件类型：PDF / 图片请复制正文后粘贴到文本框' : ('读取失败：'+e.message))
+  }
+}
+$('#r-url').oninput=()=>{ const u=$('#r-url').value.trim(); if(u) $('#r-open').href=u }
+$('#btnFetchUrl').onclick=async()=>{
+  const url=$('#r-url').value.trim()
+  if(!url){ toast('请先粘贴公众号文章链接'); return }
+  if(!/^https?:\/\//i.test(url)){ toast('请填写完整链接（以 http/https 开头）'); return }
+  $('#r-open').href=url
+  $('#urlStat').innerHTML='<span class="muted">正在尝试抓取正文（依次尝试公共代理，约 10 秒）…</span>'
+  try{
+    const pg=await fetchPage(url)
+    $('#r-text').value=pg.text
+    const meta=extractMeta(pg.html)
+    $('#p-url').value=url
+    if(meta.title) $('#p-title').value=meta.title
+    if(meta.cover) $('#p-cover').value=meta.cover
+    $('#urlStat').innerHTML='<span style="color:var(--success)">抓取成功（代理：'+esc(pg.via)+'），共 '+pg.text.length+' 字；'+
+      (meta.cover?'已自动提取封面图':'未找到封面图，将使用渐变占位海报')+'</span>'
+    $('#btnParse').click()
+  }catch(e){
+    $('#urlStat').innerHTML='<span style="color:var(--danger)">自动抓取失败（'+esc(e.message)+
+      '）。浏览器的同源策略会拦截跨域读取网页，请点右侧「打开」在新标签页打开文章，全选复制正文后粘贴到下方文本框，再点「解析筛选标准」。</span>'
+  }
+}
+function editProject(id){
+  const p=DB.projects.find(x=>x._id===id); if(!p) return
+  editingId=id
+  $('#r-text').value=p.summary||''
+  $('#p-title').value=p.title; $('#p-org').value=p.org||''; $('#p-ddl').value=p.deadline||''; $('#p-url').value=p.url||''; $('#p-cover').value=p.cover||''
+  const cr=p.parsed||{}
+  $('#c-hard').value=(cr.hard||[]).join('\n'); $('#c-bonus').value=(cr.bonus||[]).join('\n'); $('#c-exclude').value=(cr.exclude||[]).join('\n'); $('#c-min').value=cr.minAdmit||0
+  $('#criteriaBox').classList.remove('hide')
+  $('#btnCancelEdit').style.display=''
+  switchSub('organizer','lib')
+  toast('已载入「'+p.title+'」到编辑区，修改后点「保存到项目库」')
+}
+$('#btnCancelEdit').onclick=()=>{ editingId=null; $('#btnCancelEdit').style.display='none'; $('#criteriaBox').classList.add('hide') }
+
+/* ---------- 数据同步与存储诊断 ---------- */
+function renderDiag(){
+  const box=$('#diag'); if(!box) return
+  const isFile=location.protocol==='file:'
+  const bytes=storageBytes()
+  const item=(k,v)=>'<div><span class="muted" style="font-size:12px">'+k+'</span><b>'+v+'</b></div>'
+  box.innerHTML=
+    item('数据存放位置',(isFile?'本机文件 file://':esc(location.origin))+'<span style="font-size:12px;color:var(--muted)"> · 浏览器 localStorage</span>')+
+    item('本机已存报名',DB.candidates.length+' 人')+
+    item('占用 / 上限',(bytes/1024).toFixed(1)+' KB / 约 5 MB（'+Math.min(100,bytes/(5*1024*1024)*100).toFixed(1)+'%）')+
+    item('最近保存',DB.lastSaveAt?new Date(DB.lastSaveAt).toLocaleString('zh-CN'):'尚未保存')+
+    item('网络状态',navigator.onLine?'<span class="dot"></span>在线':'<span class="dot off"></span>离线（不影响本机填写与保存）')+
+    item('断网可打开',window.__swOK?'<span class="dot"></span>已缓存，断网可用'
+      :'<span class="dot off"></span>'+(isFile?'file:// 打开时不可用，用 http 访问一次即可':'本次未缓存'))
+}
+function renderSyncBanner(){
+  const el=$('#syncBanner'); if(!el) return
+  el.innerHTML='本机已保存 <b>'+DB.candidates.length+'</b> 位申请人。<b>这份数据只在这台设备的这个浏览器里</b>：'+
+    '别的同学用自己手机提交的内容不会自动出现，换浏览器 / 清理缓存 / 换设备也会看不到。'+
+    '汇总多人报名请用下方方式一（收提交码，完全离线可用）或方式二（配置云端接口）。'
+}
+$('#btnImportPkg').onclick=async()=>{
+  const files=await pickFile(true,'.json')
+  if(!files.length) return
+  let nNew=0,nUpd=0,fail=0
+  for(const f of files){
+    try{
+      const o=JSON.parse(await readFileText(f))
+      const list=Array.isArray(o)?o:(Array.isArray(o.candidates)?o.candidates:[o])
+      list.forEach(c=>{ const r=mergeCandidate(c); if(r==='new')nNew++; else if(r==='update')nUpd++; else fail++ })
+    }catch(e){ fail++ }
+  }
+  save(); renderAll()
+  $('#syncStat').innerHTML='导入完成：新增 '+nNew+' 人，更新 '+nUpd+' 人'+(fail?'，'+fail+' 个文件解析失败':'')+'　当前共 '+DB.candidates.length+' 人'
+  toast('导入完成')
+}
+$('#btnImportCode').onclick=()=>{ $('#codePaste').classList.toggle('hide'); $('#codePasteRow').classList.toggle('hide') }
+$('#btnApplyCode').onclick=()=>{
+  const parts=String($('#codePaste').value||'').split(/\s+/).map(s=>s.trim()).filter(Boolean)
+  if(!parts.length){ toast('请先粘贴提交码'); return }
+  let n=0
+  parts.forEach(cc=>{ const o=unpackCode(cc); if(o&&mergeCandidate(o)) n++ })
+  save(); renderAll()
+  $('#syncStat').innerHTML='导入完成：'+n+' 份报名，当前共 '+DB.candidates.length+' 人'
+  toast(n?'已导入 '+n+' 份':'未识别到有效提交码（应以 APPL1. 开头）')
+}
+$('#btnSyncPush').onclick=async()=>{
+  const url=$('#syncUrl').value.trim()
+  if(!url){ toast('请先填写云端接口地址'); return }
+  DB.syncUrl=url
+  try{
+    const r=await fetchWithTimeout(url,15000,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(DB)})
+    if(!r.ok) throw new Error('HTTP '+r.status)
+    save(); $('#syncStat').innerHTML='<span style="color:var(--success)">已上传到云端（'+DB.candidates.length+' 人）</span>'
+    toast('已上传')
+  }catch(e){
+    $('#syncStat').innerHTML='<span style="color:var(--danger)">上传失败：'+esc(e.message)+
+      '。注意：本页上传时不带任何鉴权头，若接口需要密钥（如 JSONBin 的 X-Master-Key），请使用支持匿名写入的接口，或让开发者在页面里补上请求头。</span>'
+  }
+}
+$('#btnSyncPull').onclick=async()=>{
+  const url=($('#syncUrl').value.trim()||DB.syncUrl||'').trim()
+  if(!url){ toast('请先填写云端接口地址'); return }
+  DB.syncUrl=url
+  try{
+    const r=await fetchWithTimeout(url,15000)
+    if(!r.ok) throw new Error('HTTP '+r.status)
+    const o=await r.json()
+    const data=(o&&o.record)?o.record:o
+    if(!data||!Array.isArray(data.candidates)) throw new Error('返回内容不是有效的备份数据')
+    DB=Object.assign({candidates:[],recruit:null,result:null,stuRecruit:null,syncUrl:url,lastSaveAt:0},data)
+    save(); renderAll()
+    $('#syncStat').innerHTML='<span style="color:var(--success)">已从云端拉取 '+DB.candidates.length+' 条</span>'
+    toast('已拉取')
+  }catch(e){ $('#syncStat').innerHTML='<span style="color:var(--danger)">拉取失败：'+esc(e.message)+'</span>' }
+}
+$('#btnExportAll').onclick=()=>{
+  download('筛选数据备份_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(DB,null,2))
+  toast('已导出备份（含候选人 / 招募配置 / 筛选结果）')
+}
+$('#btnImportAll').onclick=async()=>{
+  const [f]=await pickFile(false,'.json')
+  if(!f) return
+  try{
+    const o=JSON.parse(await readFileText(f))
+    if(!o||!Array.isArray(o.candidates)) throw new Error('不是有效的备份文件')
+    DB=Object.assign({candidates:[],recruit:null,result:null,stuRecruit:null,syncUrl:'',lastSaveAt:0},o)
+    save(); renderAll()
+    $('#syncStat').innerHTML='<span style="color:var(--success)">已恢复备份，共 '+DB.candidates.length+' 人</span>'
+    toast('已恢复备份')
+  }catch(e){ $('#syncStat').innerHTML='<span style="color:var(--danger)">恢复失败：'+esc(e.message)+'</span>' }
+}
+function renderRecruitForm(){
+  if(DB.recruit&&DB.recruit.criteria){
+    $('#r-text').value=DB.recruit.text||''
+    $('#c-hard').value=(DB.recruit.criteria.hard||[]).join('\n')
+    $('#c-bonus').value=(DB.recruit.criteria.bonus||[]).join('\n')
+    $('#c-exclude').value=(DB.recruit.criteria.exclude||[]).join('\n')
+    $('#c-min').value=DB.recruit.criteria.minAdmit||0
+    $('#criteriaBox').classList.remove('hide')
+  }
+  if(DB.syncUrl) $('#syncUrl').value=DB.syncUrl
+  if($('#orgEmail')) $('#orgEmail').value=DB.orgEmail||''
+$('#btnSaveOrgEmail').onclick=()=>{
+  const v=$('#orgEmail').value.trim()
+  if(v&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){ toast('邮箱格式不正确'); return }
+  DB.orgEmail=v; save(); toast(v?('已保存接收邮箱：'+v):'已清空接收邮箱')
+}
+}
+function renderAll(){
+  renderCandidates(); renderScreen(); renderRecruitBrief(); renderRecruitForm();
+  renderDiag(); renderSyncBanner(); renderMatchTip();
+  renderProjects(); renderProjList(); renderAiProjList(); renderApplyProject()
+}
+
+$('#btnSample').onclick=()=>{ $('#r-text').value=SAMPLE_RECRUIT }
+function autoFillProject(text){
+  if(!$('#p-title').value.trim()){
+    const first=String(text||'').split('\n').map(x=>x.trim()).find(l=>l.length>4)||''
+    $('#p-title').value=String(first).slice(0,40)
+  }
+  if(!$('#p-ddl').value.trim()) $('#p-ddl').value=parseDeadline(text)
+  if(!$('#p-org').value.trim()){
+    const m=String(text||'').match(/([一-龥]{2,12}(?:大学|学院|实验室|研究院|设计中心|工作室|协会|学会|美术馆|公众号))/g)
+    if(m&&m.length) $('#p-org').value=m[0]
+  }
+}
+$('#btnParse').onclick=()=>{
+  if(!$('#r-text').value.trim()){ toast('请先粘贴或载入招募信息'); return }
+  const c=parseRecruit($('#r-text').value)
+  $('#c-hard').value=c.hard.join('\n'); $('#c-bonus').value=c.bonus.join('\n')
+  $('#c-exclude').value=c.exclude.join('\n'); $('#c-min').value=c.minAdmit
+  $('#criteriaBox').classList.remove('hide')
+  autoFillProject($('#r-text').value)
+  toast('解析完成：硬条件 '+c.hard.length+' 条 / 加分 '+c.bonus.length+' 条 / 最少录取 '+c.minAdmit+' 人')
+}
+$('#btnPickPoster').onclick=async()=>{
+  const [f]=await pickFile(false,'image/*')
+  if(!f) return
+  try{
+    const d=await compressImage(f,720,0.72)
+    $('#p-cover').value=d
+    toast('海报已压缩就绪（约 '+(d.length/1024).toFixed(0)+' KB），点「保存到项目库」生效')
+  }catch(e){ toast('海报处理失败：'+e.message) }
+}
+$('#btnSaveProject').onclick=()=>{
+  const title=$('#p-title').value.trim()
+  if(!title){ toast('请先填写项目名称'); return }
+  const criteria={hard:lines($('#c-hard').value),bonus:lines($('#c-bonus').value),
+    exclude:lines($('#c-exclude').value),minAdmit:+$('#c-min').value||0,
+    hardPriority:['年级不符合（需大三及以上）']}
+  const text=$('#r-text').value.trim()
+  if(editingId){
+    const i=DB.projects.findIndex(x=>x._id===editingId)
+    if(i>=0){ DB.projects[i]=Object.assign({},DB.projects[i],{
+      title,org:$('#p-org').value.trim(),deadline:$('#p-ddl').value.trim(),
+      url:($('#p-url').value.trim()||$('#r-url').value.trim()),cover:$('#p-cover').value.trim(),
+      summary:String(text.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,2).join(' ')).slice(0,140),
+      parsed:criteria,updatedAt:Date.now()}) }
+    editingId=null; $('#btnCancelEdit').style.display='none'
+  }else{
+    const p={_id:'p_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+      title,org:$('#p-org').value.trim(),deadline:$('#p-ddl').value.trim(),
+      url:($('#p-url').value.trim()||$('#r-url').value.trim()),
+      cover:$('#p-cover').value.trim(),
+      summary:String(text.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,2).join(' ')).slice(0,140),
+      parsed:criteria,createdAt:Date.now()}
+    DB.projects.unshift(p)
+    DB.recruit={text,criteria}
+  }
+  save(); renderAll()
+  toast(editingId===null?'已发布到首页：'+title:'已更新项目：'+title)
+}
+/* 主办方①：粘贴链接一键解析并发布到首页 */
+$('#q-url').oninput=()=>{ const u=$('#q-url').value.trim(); if(u) $('#btnQuickOpen').setAttribute('href',u) }
+$('#btnQuickAdd').onclick=async()=>{
+  const url=$('#q-url').value.trim()
+  if(!url){ toast('请先粘贴链接'); return }
+  if(!/^https?:\/\//i.test(url)){ toast('请填写完整链接（以 http/https 开头）'); return }
+  $('#btnQuickOpen').setAttribute('href',url)
+  $('#q-stat').innerHTML='<span class="muted">正在解析链接（依次尝试公共代理，约 10 秒）…</span>'
+  try{
+    const pg=await fetchPage(url)
+    const meta=extractMeta(pg.html)
+    const text=pg.text||''
+    const title=meta.title||String((text.split('\n').map(x=>x.trim()).find(l=>l&&l.length>4))||'未命名项目').slice(0,40)
+    const deadline=parseDeadline(text)
+    const start=parseStart(text, deadline)
+    const orgM=String(text).match(/([一-龥]{2,12}(?:大学|学院|实验室|研究院|设计中心|工作室|协会|学会|美术馆|公众号))/g)
+    const org=orgM&&orgM.length?orgM[0]:''
+    const criteria=parseRecruit(text)
+    const cover=meta.cover||''
+    const p={_id:'p_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+      title,org,deadline,start,url,cover,
+      summary:String(text.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,2).join(' ')).slice(0,140),
+      parsed:criteria,createdAt:Date.now()}
+    DB.projects.unshift(p)
+    save(); renderAll()
+    $('#q-stat').innerHTML='<span style="color:var(--success)">已发布到首页（代理：'+esc(pg.via)+'）：'+esc(title)+
+      (deadline?' · 报名截止 '+deadline:'')+(start?' · 开课 '+start:'')+
+      (cover?'，已提取海报图':'，未找到海报将显示占位图（可用「上传本地海报」补）')+'。可在「我的项目库」删除或重新编辑。</span>'
+    $('#q-url').value=''
+    toast('已新增并展示到首页：'+title)
+  }catch(e){
+    $('#q-stat').innerHTML='<span style="color:var(--danger)">自动解析失败（'+esc(e.message)+
+      '）。可改用上方「编辑项目招募信息」导入本地文档或手动粘贴正文后发布。</span>'
+  }
+}
+$('#btnSaveCriteria').onclick=()=>{
+  DB.recruit={text:$('#r-text').value,criteria:{hard:lines($('#c-hard').value),bonus:lines($('#c-bonus').value),
+    exclude:lines($('#c-exclude').value),minAdmit:+$('#c-min').value||0,
+    hardPriority:['年级不符合（需大三及以上）']}}
+  save(); toast('招募配置已保存')
+}
+$('#btnMock').onclick=()=>{ DB.candidates=mockData(); DB.result=null; save(); renderCandidates(); renderScreen(); runScreening(true) }
+$('#btnClear').onclick=()=>{ DB.candidates=[]; DB.result=null; save(); renderCandidates(); renderScreen(); toast('已清空') }
+/* ==================== QQ 邮箱材料包：一键导入（ZIP / 文件夹 / .eml） ==================== */
+function fileToText(file){ return file.arrayBuffer().then(b=>new TextDecoder('utf-8').decode(new Uint8Array(b))) }
+async function inflateRaw(bytes){
+  if(typeof DecompressionStream==='undefined')
+    throw new Error('当前浏览器不支持解压 ZIP（请用 Chrome / Edge 103+，或直接选已解压的文件夹）')
+  const ds=new DecompressionStream('deflate-raw')
+  const stream=new Blob([bytes]).stream().pipeThrough(ds)
+  return new Uint8Array(await new Response(stream).arrayBuffer())
+}
+/* 最小 ZIP 解析：读中央目录 → 按条目取出文本文件 */
+async function readZipEntries(file){
+  const buf=new Uint8Array(await file.arrayBuffer())
+  const dv=new DataView(buf.buffer)
+  let eocd=-1
+  const min=Math.max(0,buf.length-22-65535)
+  for(let i=buf.length-22;i>=min;i--){ if(dv.getUint32(i,true)===0x06054b50){ eocd=i; break } }
+  if(eocd<0) throw new Error('不是有效的 ZIP 压缩包（未找到目录结束标记）')
+  const count=dv.getUint16(eocd+10,true)
+  let off=dv.getUint32(eocd+16,true)
+  const dec=new TextDecoder('utf-8')
+  const out=[]
+  for(let i=0;i<count;i++){
+    if(off+46>buf.length||dv.getUint32(off,true)!==0x02014b50) break
+    const method=dv.getUint16(off+10,true)
+    const compSize=dv.getUint32(off+20,true)
+    const nameLen=dv.getUint16(off+28,true), extraLen=dv.getUint16(off+30,true), cmtLen=dv.getUint16(off+32,true)
+    const localOff=dv.getUint32(off+42,true)
+    const path=dec.decode(buf.subarray(off+46,off+46+nameLen))
+    off+=46+nameLen+extraLen+cmtLen
+    if(/\/$/.test(path)) continue
+    if(/__(MACOSX|\.DS_Store)/i.test(path)) continue
+    const isText=/\.(txt|md|csv|json|log|eml|xml|yml|yaml)$/i.test(path)
+    let data=null
+    try{
+      if(dv.getUint32(localOff,true)===0x04034b50){
+        const lNameLen=dv.getUint16(localOff+26,true), lExtraLen=dv.getUint16(localOff+28,true)
+        const start=localOff+30+lNameLen+lExtraLen
+        const raw=buf.subarray(start,start+compSize)
+        data = method===0 ? raw : (method===8 ? await inflateRaw(raw) : null)
+      }
+    }catch(e){ data=null }
+    if(!data) continue
+    const base=path.split('/').pop()||path
+    out.push({path,size:compSize,isText,file:isText?new File([data],base,{type:''}):null})
+  }
+  return out
+}
+/* MIME 编码词解码（=?UTF-8?B?...?=） */
+function decodeMimeWords(s){
+  return String(s||'').replace(/=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g,(m,cs,enc,txt)=>{
+    try{
+      if(enc.toUpperCase()==='B'){
+        const bin=atob(txt.replace(/_/g,'/'))
+        return new TextDecoder(cs||'utf-8').decode(new Uint8Array([...bin].map(c=>c.charCodeAt(0))))
+      }
+      const q=txt.replace(/_/g,' ').replace(/=([0-9A-Fa-f]{2})/g,(mm,h)=>String.fromCharCode(parseInt(h,16)))
+      return new TextDecoder(cs||'utf-8').decode(new Uint8Array([...q].map(c=>c.charCodeAt(0))))
+    }catch(e){ return txt }
+  })
+}
+async function parseEml(file){
+  const txt=await fileToText(file)
+  const head=(txt.split(/\r?\n\r?\n/)[0]||txt).slice(0,20000)
+  const grab=(re)=>{ const m=head.match(re); return m?String(m[1]||'').replace(/\s+/g,' ').trim():'' }
+  const from=grab(/(?:^|\n)(?:From|发件人)\s*:\s*([\s\S]*?)(?=\n(?:To|Subject|Date|Cc|主题|收件人|日期)\s*:|$)/i)
+  const subject=grab(/(?:^|\n)(?:Subject|主题)\s*:\s*([\s\S]*?)(?=\n(?:To|From|Date|Cc|收件人|发件人|日期)\s*:|$)/i)
+  let name=((from.match(/^"?([^"<]*)/)||[])[1]||'').trim()
+  if(!name||/^[\w.+-]+@/.test(name.trim())) name=(from.match(/^([\w.+-]+)@/)||[])[1]||name
+  const email=(from.match(/<([^>]+)>/)||[])[1]||(from.match(/[\w.+-]+@[\w.-]+/)||[])[0]||''
+  return {name,email,subject:decodeMimeWords(subject)}
+}
+/* —— MIME 多部分解析：把 .eml 里的附件拆出来（导入「许多邮件」的关键） —— */
+const escapeRe=s=>String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')
+function decodeQp(s){ return String(s).replace(/=\r?\n/g,'').replace(/=([0-9A-Fa-f]{2})/g,(m,h)=>String.fromCharCode(parseInt(h,16))) }
+function b64ToBytes(b64){
+  const bin=atob(String(b64).replace(/\s/g,''))
+  const out=new Uint8Array(bin.length)
+  for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i)
+  return out
+}
+function strBytes(s){
+  try{ return new TextEncoder().encode(s) }catch(e){ const a=[...String(s)].map(c=>c.charCodeAt(0)); return new Uint8Array(a) }
+}
+function bytesToStr(b){
+  try{ return new TextDecoder('utf-8').decode(b) }catch(e){ return String.fromCharCode.apply(null,b) }
+}
+function mimeSplit(text){
+  const i=text.search(/\r?\n\r?\n/)
+  const head=i>=0?text.slice(0,i):text
+  const body=i>=0?text.slice(i).replace(/^\r?\n\r?\n/,''):''
+  const ct=(head.match(/^Content-Type\s*:\s*([\s\S]*?)(?=\r?\n\S|\r?\n$|$)/mi)||[])[1]||''
+  const bm=ct.match(/boundary\s*=\s*"?([^";\r\n]+)"?/i)
+  return {head,body,boundary:bm?bm[1]:null}
+}
+function walkMime(text,collected){
+  const {body,boundary}=mimeSplit(text)
+  if(!boundary) return
+  const chunks=body.split(new RegExp('--'+escapeRe(boundary)))
+  for(const ch of chunks){
+    const c=ch.replace(/^\r?\n/,'').replace(/--[\s]*$/,'')
+    if(!c||!c.trim()||/^--/.test(c.trim())) continue
+    const he=c.search(/\r?\n\r?\n/)
+    if(he<0) continue
+    const ph=c.slice(0,he), pb=c.slice(he).replace(/^\r?\n\r?\n/,'')
+    const pct=(ph.match(/^Content-Type\s*:\s*([\s\S]*?)(?=\r?\n\S|\r?\n$|$)/mi)||[])[1]||''
+    if(/multipart\//i.test(pct)&&/boundary\s*=/i.test(pct)){ walkMime(c,collected); continue }
+    const cd=(ph.match(/^Content-Disposition\s*:\s*([\s\S]*?)(?=\r?\n\S|\r?\n$|$)/mi)||[])[1]||''
+    const cte=(ph.match(/^Content-Transfer-Encoding\s*:\s*([\s\S]*?)(?=\r?\n\S|\r?\n$|$)/mi)||[])[1]||''
+    let fname=(cd.match(/filename\s*\*?\s*=\s*"?([^";\r\n]+)"?/i)||[])[1]
+      ||(pct.match(/name\s*=\s*"?([^";\r\n]+)"?/i)||[])[1]||''
+    fname=decodeMimeWords(String(fname).trim())
+    collected.push({contentType:pct,filename:fname,cte:String(cte).trim().toLowerCase(),body:pb})
+  }
+}
+async function parseEmlFull(file){
+  const raw=await fileToText(file)
+  const info=await parseEml(file)
+  const collected=[]
+  walkMime(raw,collected)
+  const atts=[]; let textBody=''
+  collected.forEach(p=>{
+    let bytes=null
+    try{
+      if(/base64/i.test(p.cte)) bytes=b64ToBytes(p.body)
+      else if(/quoted-printable/i.test(p.cte)) bytes=strBytes(decodeQp(p.body))
+      else bytes=strBytes(p.body)
+    }catch(e){ bytes=null }
+    if(p.filename&&bytes){
+      atts.push({name:p.filename,size:bytes.length,
+        isText:/\.(txt|md|csv|json|log)$/i.test(p.filename),
+        file:new File([bytes],p.filename,{type:''})})
+      return
+    }
+    if(!p.filename&&/text\/(plain|html)/i.test(p.contentType)&&bytes){
+      let s=bytesToStr(bytes)
+      if(/html/i.test(p.contentType)) s=String(s).replace(/<style[\s\S]*?<\/style>/gi,' ')
+        .replace(/<[^>]*>/g,' ').replace(/&nbsp;/gi,' ').replace(/&amp;/g,'&')
+      textBody+='\n'+s
+    }
+  })
+  if(!collected.length){ const {body}=mimeSplit(raw); textBody=body }
+  return Object.assign(info,{attachments:atts,bodyText:String(textBody).replace(/\s{3,}/g,'\n').slice(0,20000)})
+}
+const dirOf=p=>{ const a=String(p||'').split(/[\/\\]/); a.pop(); return a.join('/') }
+const GENERIC_DIR=/^(附件|attachments|材料|材料包|files|email|邮箱|邮件|下载|downloads|QQ邮箱|压缩|报名|申请者|applicants|全部|新建文件夹|\d+)$/i
+function cleanPersonName(s){
+  let x=String(s||'').replace(/\.[a-z0-9]+$/i,'')
+  const m=x.match(/[\u4e00-\u9fa5]{2,4}/)
+  if(m) return m[0]
+  x=x.replace(/[（(].*?[)）]/g,'').trim()
+  if(x.indexOf('@')>=0) x=x.split('@')[0]
+  x=x.replace(/[_\-]+/g,' ').replace(/\d{4,}/g,'').trim()
+  return (x.length>=2&&x.length<=24)?x:''
+}
+function applicantOfPath(path){
+  const parts=String(path||'').split(/[\/\\]/).filter(Boolean)
+  if(parts.length>=2){
+    const nm=cleanPersonName(parts[parts.length-2])
+    if(nm&&!GENERIC_DIR.test(nm)) return nm
+  }
+  return cleanPersonName(parts[parts.length-1]||'')
+}
+/* 用简历文本把学员基本信息回填（只填空缺，不覆盖已有） */
+function applyResumeInfo(c,text){
+  if(!text||!text.trim()) return 0
+  const inf=parseResumeText(text)||{}
+  const map={studentId:'studentId',age:'age',gender:'gender',grade:'grade',major:'major',
+    email:'email',phone:'phone',wechat:'wechat',strengths:'strengths',awards:'awards'}
+  let n=0
+  Object.keys(map).forEach(k=>{
+    const v=inf[k]
+    if(v!=null&&String(v).trim()&&!String(c[map[k]]||'').trim()){ c[map[k]]=String(v).trim(); n++ }
+  })
+  ;[['skills',SKILLS],['improve',IMPROVE],['work',WORK]].forEach(pair=>{
+    if((c[pair[0]]||[]).length) return
+    const s=(inf[pair[0]]||[]).filter(x=>pair[1].includes(x))
+    if(s.length){ c[pair[0]]=s; n++ }
+  })
+  return n
+}
+async function importMaterials(fileList){
+  const items=[]
+  for(const f of fileList){
+    if(/\.zip$/i.test(f.name||'')){
+      const ents=await readZipEntries(f)
+      ents.forEach(e=>items.push({path:e.path,file:e.file}))
+    }else items.push({path:f.webkitRelativePath||f.name,file:f})
+  }
+  if(!items.length) throw new Error('没有读到任何文件')
+  /* 1) 解析每一封邮件：拿到发件人 + 拆出里面的附件 + 取邮件正文 */
+  const folder2person={}, emailInfo={}, emlBody={}
+  const mailFiles=[]                      // 邮件里拆出来的附件：{person,path,file}
+  let emlCount=0, attCount=0
+  for(const it of items){
+    if(!/\.eml$/i.test(it.path)||!it.file) continue
+    try{
+      const info=await parseEmlFull(it.file)
+      const nm=cleanPersonName(info.name)||cleanPersonName(info.subject)||cleanPersonName(info.email)
+      if(!nm) continue
+      emlCount++
+      folder2person[dirOf(it.path)]=nm
+      emailInfo[nm]=info
+      emlBody[nm]=(emlBody[nm]||'')+'\n'+(info.bodyText||'')
+      ;(info.attachments||[]).forEach(a=>{ mailFiles.push({person:nm,path:a.name,file:a.file}); attCount++ })
+    }catch(e){}
+  }
+  /* 2) 归档：邮件附件直接归人，其余文件按目录 / 文件名认人 */
+  const TEXT_FIELD={portfolio:'portfolioText',resume:'resumeText',statement:'statementText',
+    form:'statementText',transcript:'transcriptText'}
+  const groups={}, unmatched=[]
+  let byEmail=0
+  const put=(person,path,file)=>{
+    const ft=FILE_TYPES.find(t=>t.words.test(path))
+    if(!ft){ unmatched.push(String(path).split(/[\/\\]/).pop()); return false }
+    const g=groups[person]=groups[person]||{files:{},pending:[],email:''}
+    const em=emailInfo[person]
+    if(em&&em.email&&!g.email) g.email=em.email
+    g.files[ft.key]={name:String(path).split(/[\/\\]/).pop(),type:ft.key}
+    if(file&&/\.(txt|md|csv|json|log)$/i.test(path)) g.pending.push({key:ft.key,file})
+    return true
+  }
+  mailFiles.forEach(m=>{ if(put(m.person,m.path,m.file)) byEmail++ })
+  for(const it of items){
+    if(/\.eml$/i.test(it.path)) continue
+    const dir=dirOf(it.path)
+    const known=folder2person[dir]
+    if(known&&put(known,it.path,it.file)){ byEmail++; continue }
+    put(applicantOfPath(it.path)||'未识别',it.path,it.file)
+  }
+  /* 3) 写入候选人库（并抽取可解析文本） */
+  let added=0, updated=0, filled=0
+  for(const name of Object.keys(groups)){
+    const g=groups[name]
+    let c=DB.candidates.find(x=>x.name===name)
+    if(!c){
+      c={_id:'c_'+Date.now()+Math.random().toString(36).slice(2,6),name,studentId:'',age:'',gender:'',
+        grade:'',major:'',email:g.email||'',phone:'',wechat:'',strengths:'',awards:'',
+        skills:[],improve:[],work:[],files:{},source:'mail',favorite:false,screen:null,portfolioText:''}
+      DB.candidates.push(c); added++
+    }else{ updated++; if(g.email&&!c.email) c.email=g.email }
+    c.files=Object.assign(c.files||{},g.files)
+    const acc=(field,t)=>{ if(t&&String(t).trim()) c[field]=(c[field]||'')+'\n'+t }
+    for(const p of (g.pending||[])){
+      try{
+        const t=await fileToText(p.file)
+        if(t&&t.trim()) acc(TEXT_FIELD[p.key]||'statementText',t.slice(0,20000))
+      }catch(e){}
+    }
+    acc('statementText',emlBody[name]||'')     // 邮件正文当作自述来源（常写着获奖与经历）
+    filled+=applyResumeInfo(c,[c.resumeText,emlBody[name]||'',c.statementText].filter(Boolean).join('\n'))
+  }
+  const n=Object.keys(groups).length
+  $('#importStat').innerHTML='识别到 <b>'+n+'</b> 位申请者（新增 '+added+' / 合并 '+updated+'）'+
+    (emlCount?('，解析邮件 <b>'+emlCount+'</b> 封，拆出附件 <b>'+attCount+'</b> 份'):'')+
+    (byEmail?('，其中 '+byEmail+' 份自动归人'):'')+
+    (filled?('，简历回填 '+filled+' 个字段'):'')+
+    (unmatched.length?('，<span style="color:var(--danger)">'+unmatched.length+' 个文件未匹配材料类型</span>（文件名请含 报名表 / 简历 / 作品集 / 成绩单 / 陈述）'):'')
+  save(); renderCandidates(); renderAll()
+  /* 4) 免点击：自动解析作品集 → 直接产出评选结果 */
+  const parsed=autoParseAllPortfolios()
+  const ok=runScreening(true)
+  toast(ok? ('导入 '+n+' 人，解析 '+parsed+' 份作品集，已直接产出评选结果') : '导入 '+n+' 人，但候选人库为空无法筛选')
+  return {applicants:n,added,updated,unmatched:unmatched.length}
+}
+async function doImportMaterials(files){
+  if(!files||!files.length) return
+  $('#importStat').innerHTML='<span class="muted">正在解析（含 ZIP 解压 / 邮件解析）…</span>'
+  try{ await importMaterials(files) }
+  catch(e){ const msg=String(e&&e.message||e); $('#importStat').innerHTML='<span style="color:var(--danger)">导入失败：'+esc(msg)+'</span>'; toast('导入失败：'+msg) }
+}
+$('#btnPickZip').onclick=async()=>{ doImportMaterials(await pickFile(true,'.zip,.pdf,.doc,.docx,.txt,.md,.csv,.json,.eml,.jpg,.jpeg,.png')) }
+$('#btnPickDir').onclick=()=>{
+  const inp=document.createElement('input'); inp.type='file'; inp.multiple=true
+  inp.setAttribute('webkitdirectory','')
+  inp.onchange=()=>doImportMaterials([...inp.files])
+  inp.click()
+}
+function autoParseAllPortfolios(){
+  let n=0
+  DB.candidates.forEach(c=>{
+    if(c.portfolioOverview) return
+    const t=[c.portfolioText,c.resumeText,c.statementText,c.strengths].filter(Boolean).join('\n')
+    c.portfolioOverview=analyzePortfolio(String(c.portfolioText||'').trim()?c.portfolioText:t)
+    if(!String(c.portfolioText||'').trim()&&c.portfolioOverview)
+      c.portfolioOverview.category='未解析（无文本内容，需人工查看原件）'
+    n++
+  })
+  return n
+}
+$('#btnParsePortfolio').onclick=()=>{
+  DB.candidates.forEach(c=>{ c.portfolioOverview=null })
+  const n=autoParseAllPortfolios()
+  save(); renderCandidates(); toast('已按质量标准重新解析 '+n+' 份作品集')
+}
+/* 一键产出评选结果：先确保作品集已解析，再跑多元评价，并直接展开结果卡 */
+function runScreening(auto){
+  if(!DB.candidates.length){ toast('候选人库为空'); return false }
+  autoParseAllPortfolios()
+  const cr=(DB.recruit&&DB.recruit.criteria)||parseRecruit('')
+  DB.result=runPipeline(DB.candidates,cr)
+  DB.result.screenResults.forEach(r=>{ const c=DB.candidates.find(x=>x._id===r._id); if(c) c.screen=r })
+  save(); renderCandidates(); renderScreen()
+  if(auto){
+    const card=$('#aiScreenCard')
+    if(card){ card.classList.remove('hide'); if(card.scrollIntoView) card.scrollIntoView({behavior:'smooth',block:'start'}) }
+  }
+  toast('已按多元评价标准产出评选结果')
+  return true
+}
+$('#btnRun').onclick=()=>runScreening(true)
+function renderScreen(){
+  const box=$('#aiScreenStat'); if(!box) return
+  const r=DB.result
+  if(!r){ box.innerHTML='<div class="empty">还没有筛选结果，先在上方导入材料并「运行筛选」。</div>'; return }
+  const g={推荐:[],待定:[],淘汰:[]}
+  r.screenResults.forEach(x=>g[x.tier].push(x))
+  box.innerHTML=
+    '<div class="stats">'+
+    '<div class="stat"><b>'+r.stats.total+'</b><span>总数</span></div>'+
+    '<div class="stat"><b style="color:var(--success)">'+r.stats.recommend+'</b><span>推荐</span></div>'+
+    '<div class="stat"><b style="color:var(--warning)">'+r.stats.pending+'</b><span>待定</span></div>'+
+    '<div class="stat"><b style="color:var(--danger)">'+r.stats.eliminated+'</b><span>淘汰</span></div>'+
+    '</div>'+
+    (r.fallbackLog.length?'<div style="font-size:13px">兜底放宽：'+r.fallbackLog.map(esc).join('；')+'</div>':'')+
+    '<div class="banner info" style="margin-top:10px"><b>多元评价标准（满分 100）</b>：'+
+      SCORE_DIMS.map(d=>esc(d.label)+' '+d.max+' 分').join(' ＋ ')+
+      '。<br>竞赛成果按「国家级 20 > 省级 14 > 市级 9 > 校级 5」基准 × 奖项名次系数计分；'+
+      '作品集不再只判「完整」，而是按 6 项质量标准（体量、过程深度、落地转化、叙事概念、技法表现、协作执行）逐项举证打分。</div>'+
+    ['推荐','待定','淘汰'].map(t=>'<details '+(t==='推荐'?'open':'')+'><summary>'+t+'（'+g[t].length+'）</summary>'+
+      g[t].map(x=>{
+        const rs=(x.reasons&&x.reasons.length)?x.reasons:[(x.reason||x.fallbackReason||'—')]
+        const bars=(x.dims||[]).map(d=>'<div class="qbar"><span class="qt">'+esc(d.label)+'</span>'+
+          '<span class="qg"><i class="qf" style="width:'+Math.round(d.score/d.max*100)+'%"></i></span>'+
+          '<span class="qv">'+d.score+'/'+d.max+'</span></div>').join('')
+        const adv=(x.advantages&&x.advantages.length)
+          ? '<div class="qadv">'+x.advantages.slice(0,3).map(a=>'<div>'+esc(a)+'</div>').join('')+'</div>' : ''
+        const dis=(x.disadvantages&&x.disadvantages.length)
+          ? '<div class="qweak">'+x.disadvantages.slice(0,3).map(a=>'<div>'+esc(a)+'</div>').join('')+'</div>' : ''
+        return '<div class="list-item"><b>'+esc(x.name)+'</b> '+
+          '<span class="tag tag-purple">'+x.score+' / 100 分</span> '+
+          (x.fallback?'<span class="tag tag-warn">兜底</span> ':'')+
+          (bars?'<div style="margin-top:8px">'+bars+'</div>':'')+
+          adv+dis+
+          '<div class="reason">'+rs.map(rr=>'· '+esc(rr)).join('<br>')+'</div></div>'
+      }).join('')+
+      '</details>').join('')
+}
+$('#btnViewScreen').onclick=()=>{ $('#aiScreenCard').classList.remove('hide'); $('#aiScreenCard').scrollIntoView({behavior:'smooth',block:'start'}) }
+$('#btnViewCands').onclick=()=>{ $('#aiCandCard').classList.remove('hide'); $('#aiCandCard').scrollIntoView({behavior:'smooth',block:'start'}) }
+function renderCandidates(){
+  const kw=($('#kw')&&$('#kw').value||'').trim()
+  const list=DB.candidates.filter(c=>!kw||[c.name,c.studentId,c.major,c.projectTitle].join(' ').includes(kw))
+  $('#candCount').textContent='（'+DB.candidates.length+' 人）'
+  if(!list.length){ $('#candList').innerHTML='<div class="empty">暂无候选人，可载入示例材料或导入本地文件</div>'; return }
+  $('#candList').innerHTML='<table><thead><tr><th>姓名</th><th>专业 / 年级</th><th>材料</th><th>初筛</th><th>操作</th></tr></thead><tbody>'+
+    list.map(c=>{
+      const f=c.files||{}
+      const miss=FILE_TYPES.filter(t=>!f[t.key]).map(t=>t.label)
+      const tier=c.screen?c.screen.tier:''
+      return '<tr><td><b>'+esc(c.name)+'</b>'+(c.favorite?' <span class="tag tag-ok">心仪</span>':'')+
+        '<div class="muted" style="font-size:12px">'+esc(c.studentId||'—')+'</div></td>'+
+        '<td>'+esc(c.major||'-')+' / '+esc(c.grade||'-')+'</td>'+
+        '<td>'+(miss.length?'<span class="tag tag-warn">缺 '+miss.join('、')+'</span>':'<span class="tag tag-ok">齐全</span>')+'</td>'+
+        '<td>'+(tier?'<span class="tag '+(tier==='推荐'?'tag-ok':tier==='待定'?'tag-warn':'tag-err')+'">'+tier+(c.screen.fallback?'（兜底）':'')+'</span>':'<span class="tag tag-mute">未筛选</span>')+'</td>'+
+        '<td><button class="btn btn-line btn-sm" data-id="'+c._id+'">详情</button></td></tr>'
+    }).join('')+'</tbody></table>'
+  $$('#candList button').forEach(b=>b.onclick=()=>showDetail(b.dataset.id))
+}
+function showDetail(id){
+  const c=DB.candidates.find(x=>x._id===id); if(!c) return
+  const f=c.files||{}
+  const miss=FILE_TYPES.filter(t=>!f[t.key]).map(t=>t.label)
+  const po=c.portfolioOverview
+  $('#detail').innerHTML=
+    '<div class="row" style="align-items:flex-start;gap:20px;flex-wrap:wrap">'+
+    '<div style="flex:1;min-width:260px">'+
+    kv('姓名',esc(c.name))+kv('学号',esc(c.studentId||'—'))+kv('性别 / 年龄',esc(c.gender||'—')+' / '+esc(c.age||'—'))+
+    kv('年级 / 专业',esc(c.grade||'—')+' / '+esc(c.major||'—'))+
+    kv('邮箱（脱敏）',esc(maskEmail(c.email)))+kv('手机号（脱敏）',esc(maskPhone(c.phone)))+
+    kv('微信号',esc(c.wechat||'未提供'))+kv('来源',c.source==='mail'?'邮件导入':'小程序直传')+
+    (c.projectTitle?kv('报名项目',esc(c.projectTitle)):'')+
+    (c.projectFields&&Object.keys(c.projectFields).length?kv('项目专属信息',
+      Object.keys(c.projectFields).map(k=>esc(k)+'：'+esc(c.projectFields[k])).join('<br>')):'')+
+    '</div><div style="flex:1;min-width:260px">'+
+    kv('材料',miss.length?'<span class="tag tag-warn">缺 '+esc(miss.join('、'))+'</span>':'<span class="tag tag-ok">齐全</span>')+
+    kv('专业技能',(c.skills||[]).map(esc).join('、')||'—')+
+    kv('提升方向',(c.improve||[]).map(esc).join('、')||'—')+
+    kv('承担工作',(c.work||[]).map(esc).join('、')||'—')+
+    (c.strengths?'<div style="margin-top:10px"><label>特长与优势</label><div class="muted" style="font-size:13.5px">'+esc(c.strengths)+'</div></div>':'')+
+    (c.awards?'<div style="margin-top:10px"><label>奖项 / 成果</label><div class="muted" style="font-size:13.5px">'+esc(c.awards)+'</div></div>':'')+
+    '</div></div>'+
+    (po?'<div style="margin-top:14px"><label>作品集解析（质量标准逐项举证）</label>'+
+      kv('体裁类别',esc(po.category))+kv('视觉风格',esc(po.style))+
+      kv('自述体量',po.worksGroups?(po.worksGroups+' 组 / 件'):'未标注')+
+      (po.grade?kv('综合等级','<span class="tag tag-purple">'+esc(po.grade)+'</span> 质量 '+po.qualityScore+' / '+po.qualityMax+' 分'):'')+
+      ((po.quality&&po.quality.length)?
+        '<div style="margin-top:8px">'+
+        po.quality.map(q=>'<div class="qbar"><span class="qt">'+esc(q.label)+'</span>'+
+          '<span class="qg"><i class="qf" style="width:'+Math.round(q.score/q.max*100)+'%"></i></span>'+
+          '<span class="qv">'+q.score+'/'+q.max+'</span></div>'+
+          '<div class="muted" style="font-size:12.5px;margin:0 0 2px 104px">'+
+            (q.n?('证据：'+esc(q.evidence.join('、'))):('无证据'))+
+            '　'+esc(q.standard)+'</div>').join('')+
+        '</div>':'')+
+      ((po.advantages&&po.advantages.length)?'<div class="qadv" style="margin-top:8px">'+
+        po.advantages.map(a=>'<div>'+esc(a.text)+'</div>').join('')+'</div>':'')+
+      ((po.weaknesses&&po.weaknesses.length)?'<div class="qweak" style="margin-top:6px">'+
+        po.weaknesses.map(w=>'<div>'+esc(w.text)+'</div>').join('')+'</div>':'')+
+      (po.subjective?'<div style="margin-top:10px"><label>主观评价</label>'+
+        '<div class="muted" style="font-size:13.5px">'+esc(po.subjective)+'</div></div>':'')+
+      '</div>':'')+
+    (c.screen?'<div style="margin-top:14px">'+kv('初筛结果','<span class="tag '+
+      (c.screen.tier==='推荐'?'tag-ok':c.screen.tier==='待定'?'tag-warn':'tag-err')+'">'+c.screen.tier+
+      (c.screen.fallback?'（兜底）':'')+'</span> <span class="tag tag-purple">'+c.screen.score+' 分</span>')+
+      '<div style="margin-top:8px"><label>'+(c.screen.tier==='推荐'?'推荐原因':(c.screen.tier==='待定'?'未推荐原因':'淘汰原因'))+'</label>'+
+      '<div class="reason">'+(((c.screen.reasons&&c.screen.reasons.length)?c.screen.reasons:[(c.screen.reason||c.screen.fallbackReason||'—')])
+        .map(r=>'· '+esc(r)).join('<br>'))+'</div></div></div>':'')+
+    '<div class="row" style="margin-top:16px">'+
+    '<button class="btn btn-ghost btn-sm" id="dFav">'+(c.favorite?'取消心仪':'标记心仪')+'</button>'+
+    '<button class="btn btn-primary btn-sm" id="dContact">一键联系</button></div><div id="contactBox"></div>'
+  $('#detailCard').classList.remove('hide')
+  $('#dFav').onclick=function(){ const was=c.favorite; c.favorite=!was; save(); renderCandidates(); showDetail(id);
+    if(!was){ const nb=$('#dFav'); if(nb){ nb.classList.remove('heart-beat'); void nb.offsetWidth; nb.classList.add('heart-beat') } }
+    toast(c.favorite?'已标记心仪':'已取消') }
+  $('#dContact').onclick=()=>{
+    const tpl='{姓名} 同学：\n祝贺你通过「{活动名称}」筛选，诚邀你参加后续面试。请于三日内回复确认。\n—— 项目组'
+    const filled=tpl.replace(/\{姓名\}/g,c.name).replace(/\{活动名称\}/g,'艺术与文旅产业融合创新设计微专业')
+    $('#contactBox').innerHTML='<div style="margin-top:14px"><label>录取文案（可编辑）</label>'+
+      '<textarea id="tplBox" style="min-height:110px">'+esc(tpl)+'</textarea>'+
+      '<div class="row" style="margin-top:10px">'+
+      '<button class="btn btn-line btn-sm" id="cpAll">复制文案</button>'+
+      '<button class="btn btn-line btn-sm" id="cpMail">复制收件人（'+esc(c.email)+'）</button>'+
+      '<a class="btn btn-ghost btn-sm" href="tel:'+esc(c.phone)+'">拨打电话</a>'+
+      '<button class="btn btn-ghost btn-sm" id="cpWx">复制微信号</button></div>'+
+      '<div class="muted" style="font-size:12.5px;margin-top:8px">QQ 邮箱：复制收件人与文案后到 mail.qq.com 粘贴发送</div></div>'
+    const cp=(t)=>{ navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>toast('已复制')).catch(()=>toast('复制失败')) }
+    $('#cpAll').onclick=()=>cp($('#tplBox').value.replace(/\{姓名\}/g,c.name).replace(/\{活动名称\}/g,'艺术与文旅产业融合创新设计微专业'))
+    $('#cpMail').onclick=()=>cp(c.email); $('#cpWx').onclick=()=>cp(c.wechat||'')
+  }
+}
+
+/* ==================== 导出 ==================== */
+function sheetsFromResult(){
+  const r=DB.result; if(!r){ toast('请先运行筛选'); return null }
+  return [
+    {name:'材料清单',rows:[['姓名','学号','报名表','简历','作品集','成绩单','个人陈述','是否齐全']].concat(
+      r.materialList.map(m=>[m.name,m.studentId,m.form?'✓':'✗',m.resume?'✓':'✗',m.portfolio?'✓':'✗',
+        m.transcript?'✓':'✗',m.statement?'✓':'✗',m.complete?'齐全':'不齐']))},
+    {name:'候选人信息总表',rows:[['姓名','学号','年龄','性别','年级','专业','邮箱(脱敏)','手机号(脱敏)','报名项目','特长优势','奖项成果','专业技能','提升方向','承担工作','作品集概述']].concat(
+      r.masterRows.map(m=>[m.name,m.studentId,m.age,m.gender,m.grade,m.major,m.email,m.phone,m.projectTitle||'',m.strengths,m.awards,
+        (m.skills||[]).join('、'),(m.improve||[]).join('、'),(m.work||[]).join('、'),
+        m.portfolioOverview?[m.portfolioOverview.category,m.portfolioOverview.style,m.portfolioOverview.advantage,m.portfolioOverview.weakness].filter(Boolean).join('；'):'']))},
+    {name:'初筛结果',rows:[['姓名','档位','推荐/淘汰原因','命中加分项','兜底入选','加分项数','评分']].concat(
+      r.screenResults.map(x=>[x.name,x.tier,x.reason||x.fallbackReason||'',
+        (x.bonusHits||[]).join('、'),x.fallback?'是':'',x.bonusCount,x.score]))},
+    {name:'多元评价明细',rows:[['姓名','档位','总分100','基本条件15','材料完备度10','竞赛成果20','学术成果10','实践成果15','作品集质量25','意愿加分5','★优势','☆不足','竞赛级别分布','作品集等级','作品集主观评价']].concat(
+      r.screenResults.map(x=>{
+        const dm={}; (x.dims||[]).forEach(d=>dm[d.key]=d.score+'/'+d.max)
+        const po=(DB.candidates.find(c=>c._id===x._id)||{}).portfolioOverview||null
+        return [x.name,x.tier,x.score,dm.basic||'',dm.material||'',dm.contest||'',dm.academic||'',
+          dm.practice||'',dm.portfolio||'',dm.bonus||'',
+          (x.advantages||[]).join('；'),(x.disadvantages||[]).join('；'),
+          x.ach?x.ach.levelText:'',po?(po.grade||''):'',po?(po.subjective||''):'']
+      }))},
+    {name:'面试准备表',rows:[['姓名','邮箱(脱敏)','手机号(脱敏)','优势1','优势2','优势3','面试问题1','面试问题2','面试问题3']].concat(
+      r.interviewPrep.map(p=>[p.name,p.email,p.phone,
+        (p.advantages[0]&&p.advantages[0].text)||'',(p.advantages[1]&&p.advantages[1].text)||'',(p.advantages[2]&&p.advantages[2].text)||'',
+        p.questions[0]||'',p.questions[1]||'',p.questions[2]||'']))},
+    {name:'心仪候选者名单',rows:[['姓名','学号','专业','年级','邮箱(脱敏)','手机号(脱敏)']].concat(
+      DB.candidates.filter(c=>c.favorite).map(c=>[c.name,c.studentId,c.major,c.grade,maskEmail(c.email),maskPhone(c.phone)]))}
+  ]
+}
+$('#btnExport').onclick=()=>{
+  const sheets=sheetsFromResult(); if(!sheets) return
+  if(window.XLSX){
+    const wb=XLSX.utils.book_new()
+    sheets.forEach(s=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s.rows),s.name))
+    XLSX.writeFile(wb,'筛选交付物_'+new Date().toISOString().slice(0,10)+'.xlsx')
+    toast('已导出 xlsx（5 个工作表）')
+  }else{
+    sheets.forEach((s,i)=>setTimeout(()=>{
+      const csv='\ufeff'+s.rows.map(r=>r.map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')).join('\n')
+      const a=document.createElement('a')
+      a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}))
+      a.download=s.name+'.csv'; a.click()
+    },i*300))
+    toast('离线模式：已逐个导出 CSV')
+  }
+}
+
+/* ==================== 星星跳跃动画 ==================== */
+function starBurst(x,y){
+  const layer=document.createElement('div'); layer.className='star-burst'
+  layer.style.left=x+'px'; layer.style.top=y+'px'
+  const glyphs=['⭐','🌟','✨','⭐','✨','🌟']
+  for(let i=0;i<9;i++){
+    const s=document.createElement('i'); s.textContent=glyphs[i%glyphs.length]
+    const ang=Math.random()*Math.PI*2, dist=42+Math.random()*46
+    const dx=Math.cos(ang)*dist, dy=-Math.abs(Math.sin(ang)*dist)-24
+    s.style.setProperty('--dx',dx.toFixed(0)+'px')
+    s.style.setProperty('--dy',dy.toFixed(0)+'px')
+    s.style.left=(Math.random()*16-8).toFixed(0)+'px'
+    s.style.top=(Math.random()*16-8).toFixed(0)+'px'
+    s.style.fontSize=(15+Math.random()*8).toFixed(0)+'px'
+    layer.appendChild(s)
+  }
+  document.body.appendChild(layer)
+  setTimeout(()=>layer.remove(),900)
+}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-star]')
+  if(t){ const r=t.getBoundingClientRect(); starBurst(r.left+r.width/2, r.top+r.height/2) }
+})
+
+/* ==================== 子导航（三栏切换） ==================== */
+function switchSub(prefix,sub){
+  const navId = prefix==='student' ? 'stuNav' : prefix==='organizer' ? 'orgNav' : prefix+'Nav'
+  const nav=$('#'+navId); if(!nav) return
+  $$('#'+navId+' .subtab').forEach(x=>x.classList.toggle('on',x.dataset.sub===sub))
+  $$('[data-subp="'+prefix+'"]').forEach(el=>el.classList.toggle('hide', el.id!=='sub-'+sub))
+}
+
+/* ==================== 启动 ==================== */
+function switchView(v){
+  $$('.tab').forEach(x=>x.classList.toggle('on',x.dataset.view===v))
+  ;['projects','student','organizer'].forEach(k=>{ const el=$('#view-'+k); if(el) el.classList.toggle('hide',k!==v) })
+  if(v==='student') switchSub('student','pick')
+  if(v==='organizer') switchSub('organizer','lib')
+}
+const WX_PROJECTS=[
+  {_id:'wx_qd1am', title:'招募｜“2026复调的艺术史·国际学术营”学员招募',
+   org:'四川美术学院（联合 北京大学 / 南京大学）', deadline:'2026-09-13', start:'2026-09-14',
+   url:'https://mp.weixin.qq.com/s/qD1AMiRfk1xEaUtJcYS2nQ',
+   cover:'posters/qD1AMiRfk1xEaUtJcYS2nQ_cover.jpg',
+   summary:'面向川美硕士、博士研究生的国际学术营，三期工坊探讨自然/人工智能、图像理论、艺术地理学。',
+   parsed:{hard:['四川美术学院硕士、博士研究生（不限专业）','已选到同名专业选修课的同学请勿重复报名'],
+     bonus:['有相关学术活动参与经历','有论文或作品发表'], exclude:[], minAdmit:0,
+     email:'1462655871@qq.com', note:'报名表 + 学术活动/论文/作品证明材料打包发邮箱；结营论文终稿 2026-12-01 提交'},
+   createdAt:Date.now()},
+  {_id:'wx_awqf', title:'“跨越山海——新西部主题雕塑创作”公共美育系列工作坊 | 招募公告',
+   org:'国家艺术基金管理中心、四川美术学院', deadline:'2026-09-19', start:'2026-09-21',
+   url:'https://mp.weixin.qq.com/s/AwqF_MTp7-ImkwN8_pW_DA',
+   cover:'posters/AwqF_MTp7-ImkwN8_pW_DA_cover.jpg',
+   summary:'免费公共美育工作坊：展览导览+泥塑创作（第一期）、艺术写作（第二期），共招 45 人。',
+   parsed:{hard:['第一期：川美在校本科/研究生与社会公众，建议年龄≥8周岁需家长陪同','第二期：需具备一定文字表达能力'],
+     bonus:['有艺术实践经历','有写作经历'], exclude:[], minAdmit:45,
+     email:'185581395@qq.com', note:'个人简历（含姓名/年级/专业/联系方式及艺术实践或写作经历）发邮箱，邮件标题注明“跨越山海工作坊报名+第X期+姓名”'},
+   createdAt:Date.now()},
+  {_id:'wx_pE4m', title:'四川美术学院实验艺术学院艺术与文旅产业融合创新设计微专业招生简章',
+   org:'四川美术学院实验艺术学院', deadline:'2026-09-20', start:'2026-09-24',
+   url:'https://mp.weixin.qq.com/s/pE4mmps9ZQvB7lPjLL8NFw',
+   cover:'posters/pE4mmps9ZQvB7lPjLL8NFw_cover.jpg',
+   summary:'面向全校大三及以上本科生的文旅融合创新设计微专业，招 25 人，免学费。',
+   parsed:{hard:['全校本科生（大三及以上）各学院各专业','同期只能选报一个微专业'],
+     bonus:['有作品集或相关创作成果（≥3件）','有文旅/设计实践经历'], exclude:[], minAdmit:25,
+     email:'541040612@qq.com', note:'材料：报名表+成绩单+作品集(≥3件)+个人陈述(500字内)；邮箱报名，9/10–9/20 申请，9/24 公布名单后开课'},
+   createdAt:Date.now()},
+  {_id:'wx_vsEY', title:'四川美术学院实验艺术学院数智影像艺术微专业招生简章',
+   org:'四川美术学院实验艺术学院', deadline:'2026-09-23', start:'2026-09-29',
+   url:'https://mp.weixin.qq.com/s/vs_EYwy9Kpwr6TJcDbNkvw',
+   cover:'posters/vs_EYwy9Kpwr6TJcDbNkvw_cover.jpg',
+   summary:'面向全校本科生的 AIGC 数智影像微专业，招 20 人，线上线下混合教学，免学费。',
+   parsed:{hard:['全校本科生各学院各专业','同期只能选报一个微专业'],
+     bonus:['有作品集或相关创作成果','掌握 AIGC / AI 影像工具'], exclude:[], minAdmit:20,
+     email:'1415577587@qq.com', note:'材料：报名表+成绩单+作品集+个人陈述与简历；邮箱报名，9/10–9/23 申请，9/29 公布名单后开课'},
+   createdAt:Date.now()}
+]
+function seedProjects(){
+  const fd=n=>{ const d=new Date(Date.now()+n*86400000)
+    return d.getFullYear()+'-'+d2(d.getMonth()+1)+'-'+d2(d.getDate()) }
+  const samples=[
+    {_id:'p_seed1',title:'艺术与文旅产业融合创新设计微专业（2026 秋季）',org:'川美设计学院',
+      deadline:parseDeadline(SAMPLE_RECRUIT)||fd(28),url:'https://www.scfai.edu.cn/',cover:'',
+      summary:'面向大三及以上设计类学生的微专业招募，含在地文化挖掘与文旅产品设计实践。',
+      parsed:parseRecruit(SAMPLE_RECRUIT),createdAt:Date.now()},
+    {_id:'p_seed2',title:'数字文创设计工作坊（冬季）',org:'数字文创实验室',
+      deadline:fd(5),url:'https://www.scfai.edu.cn/',cover:'',
+      summary:'数字文创与 AI 辅助设计工作坊，含市集与展览执行机会（示例项目）。',
+      parsed:parseRecruit(SAMPLE_RECRUIT2),createdAt:Date.now()}
+  ]
+  // 合并：本地已有同名项目不覆盖；被主办方删除的项目不再补入（持久化删除）
+  const removed=DB.removed||[]
+  const all=WX_PROJECTS.concat(samples)
+  let changed=false
+  all.forEach(s=>{ if(removed.includes(s._id)) return
+    if(!DB.projects.find(x=>x._id===s._id)){ DB.projects.push(s); changed=true } })
+  if(changed) save()
+}
+$$('.tab').forEach(t=>t.onclick=()=>switchView(t.dataset.view))
+$('#kw').oninput=renderCandidates
+$('#p-kw').oninput=()=>{ pKw=$('#p-kw').value; renderProjects() }
+$('#btnSearch').onclick=()=>{ pKw=$('#p-kw').value; renderProjects() }
+$('#btnChangeProj').onclick=()=>{ switchView('projects'); window.scrollTo({top:0,behavior:'smooth'}) }
+$('#btnOpenSrc').onclick=()=>{ const p=curProject(); if(p) openSource(p) }
+$$('#stuNav .subtab').forEach(t=>t.onclick=()=>switchSub('student',t.dataset.sub))
+$$('#orgNav .subtab').forEach(t=>t.onclick=()=>switchSub('organizer',t.dataset.sub))
+load(); seedProjects()
+renderChips(); renderPicked(); injectMics(); renderFilters(); renderAll()
+initHeroGesture()
+renderSubPick()
+$('#btnVoiceAll').onclick=voiceFillAll
+;['#f-grade','#f-major'].forEach(s=>{ const el=$(s); if(el){ el.oninput=renderMatchTip; el.onchange=renderMatchTip } })
+if(!voiceSupported()){
+  $('#fillStat').innerHTML='<span class="muted">当前浏览器不支持语音识别，建议用 Chrome / Edge 打开；'+
+    '也可用「上传简历识别」或「粘贴简历文本」自动填表</span>'
+}
+function renderSubPick(){
+  const box=$('#projPicker'); if(!box) return
+  if(!DB.projects.length){ box.innerHTML='<div class="empty">还没有项目，去招募页或主办方新增</div>'; return }
+  box.innerHTML=DB.projects.map(p=>projectCard(p,{picker:true})).join('')
+  // 主页已有项目：点「选这个项目」→ 自动解析招募要求并跳转到解析结果（无需上传任何链接）
+  $$('#projPicker [data-pick]').forEach(b=>b.onclick=()=>selectProject(b.dataset.pick))
+}
+/* 通过分享链接带入的报名数据：index.html#import=APPL1.xxx */
+;(function(){
+  const m=location.hash.match(/import=([A-Za-z0-9+/=.]+)/)
+  if(!m) return
+  const o=unpackCode(decodeURIComponent(m[1]))
+  if(o&&mergeCandidate(o)){ save(); renderAll(); toast('已从链接导入报名：'+o.name) }
+})()
+window.addEventListener('online',renderDiag)
+window.addEventListener('offline',renderDiag)
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+  navigator.serviceWorker.register('sw.js').then(()=>{ window.__swOK=true; renderDiag() }).catch(()=>{})
+}
+
+/* ==================== 首次进入 · 动画引导（onboarding） ==================== */
+;(function(){
+  const STEPS=[
+    {sel:'#view-projects #pGrid .pcard', fallback:'#view-projects .gridp',
+     before:()=>switchView('projects'),
+     title:'查看项目信息与截止时间',
+     desc:'这里是正在招募的项目。每张卡片都带着原文信息、原件入口与报名截止时间，点海报或「报名」即可进入报名。'},
+    {sel:'.tab[data-view="student"]',
+     title:'学生报名入口',
+     desc:'点顶部「学生报名」，学生进入报名流程：选项目 → 智能填表 → 查询结果。'},
+    {sel:'.tab[data-view="organizer"]',
+     before:()=>switchView('projects'),
+     title:'主办方（老师）入口',
+     desc:'点「主办方」，老师可以新增、修改、编辑招募项目，并管理自己的项目库。'},
+    {sel:'#btnPickZip',
+     before:()=>{ switchView('organizer'); switchSub('organizer','ai') },
+     title:'一键导入邮件 + AI 智能筛选',
+     desc:'老师把邮箱里的报名邮件（.eml / ZIP / 整个文件夹）整包导入，系统自动拆邮件、认人、解析材料，一键产出 AI 筛选结果。'},
+    {sel:'#projPicker',
+     before:()=>{ switchView('student'); switchSub('student','pick') },
+     title:'学生选项目、看需求',
+     desc:'学生报名时选择项目，即可查看该项目的招募要求（硬条件、加分项、所需材料），帮助判断是否适合报名。'},
+    {sel:'#sub-fill .card', fallback:'#sub-fill',
+     before:()=>{ switchView('student'); switchSub('student','fill') },
+     title:'一键智能填写报名表',
+     desc:'学生可上传简历、粘贴文本，或直接语音口述一段自我介绍，网站自动识别并一键填好整张报名表。'}
+  ]
+  const KEY='screener_tour_v1'
+  let idx=0, active=false, els=null
+
+  function build(){
+    const c=document.createElement('div'); c.className='tour-catch'
+    const s=document.createElement('div'); s.className='tour-spot'
+    const t=document.createElement('div'); t.className='tour-tip'
+    document.body.appendChild(c); document.body.appendChild(s); document.body.appendChild(t)
+    c.onclick=()=>{ idx<STEPS.length-1 ? go(1) : finish() }
+    els={c,s,t}
+  }
+  function destroy(){ if(!els) return; els.c.remove(); els.s.remove(); els.t.remove(); els=null }
+  function target(st){ let el=$(st.sel); if(!el&&st.fallback) el=$(st.fallback); return el }
+  function go(d){ idx=Math.max(0,Math.min(STEPS.length-1, idx+d)); render() }
+  function goto(i){ idx=Math.max(0,Math.min(STEPS.length-1,i)); render() }
+  function render(){
+    const st=STEPS[idx]
+    if(st.before){ try{ st.before() }catch(e){} }
+    const raf=window.requestAnimationFrame||(cb=>setTimeout(cb,16))
+    raf(()=>raf(()=>draw(st)))
+  }
+  function draw(st){
+    const el=target(st)
+    if(!el){ if(idx<STEPS.length-1){ idx++; render() } else finish(); return }
+    try{ el.scrollIntoView({block:'center', inline:'center'}) }catch(e){}
+    setTimeout(()=>{
+      if(!els) return
+      const r=el.getBoundingClientRect(), vw=window.innerWidth, vh=window.innerHeight, pad=6
+      const left=Math.max(4, r.left-pad), top=Math.max(4, r.top-pad)
+      const w=Math.min(vw-8, r.width+pad*2), h=Math.min(vh-8, r.height+pad*2)
+      els.s.style.left=left+'px'; els.s.style.top=top+'px'
+      els.s.style.width=w+'px'; els.s.style.height=h+'px'
+      els.t.innerHTML=
+        '<div class="tstep">第 '+(idx+1)+' / '+STEPS.length+' 步</div>'+
+        '<div class="tt">'+st.title+'</div>'+
+        '<div class="td">'+st.desc+'</div>'+
+        '<div class="tacts"><button class="tskip" type="button">跳过</button><span class="sp"></span>'+
+          (idx>0?'<button class="tbtn" type="button" data-tour="prev">上一步</button>':'')+
+          '<button class="tbtn main" type="button" data-tour="next">'+(idx===STEPS.length-1?'完成':'下一步')+'</button>'+
+        '</div>'+
+        '<div class="tour-dots">'+STEPS.map((_,i)=>'<i data-tour="dot" data-i="'+i+'" class="'+(i===idx?'on':'')+'"></i>').join('')+'</div>'
+      els.t.style.animation='none'; void els.t.offsetWidth; els.t.style.animation=''
+      const tw=els.t.offsetWidth, th=els.t.offsetHeight, gap=16
+      let tTop=r.bottom+gap, up=false
+      if(tTop+th > vh-12){ tTop=r.top-th-gap; up=true }
+      tTop=Math.max(12, Math.min(vh-th-12, tTop))
+      const tLeft=Math.max(12, Math.min(vw-tw-12, r.left + r.width/2 - tw/2))
+      els.t.style.left=tLeft+'px'; els.t.style.top=tTop+'px'
+      let caret=els.t.querySelector('.tour-caret')
+      if(!caret){ caret=document.createElement('div'); els.t.appendChild(caret) }
+      caret.className='tour-caret '+(up?'down':'up')
+      els.t.querySelectorAll('[data-tour]').forEach(b=>{
+        const a=b.dataset.tour
+        b.onclick=(e)=>{ e.stopPropagation()
+          if(a==='next'){ idx<STEPS.length-1 ? go(1) : finish() }
+          else if(a==='prev') go(-1)
+          else if(a==='dot') goto(+b.dataset.i)
+        }
+      })
+      const sk=els.t.querySelector('.tskip'); if(sk) sk.onclick=(e)=>{ e.stopPropagation(); finish() }
+    }, 60)
+  }
+  function start(force){
+    if(active) return
+    if(!force){ try{ if(localStorage.getItem(KEY)==='1') return }catch(e){} }
+    active=true; idx=0; build()
+    try{ switchView('projects') }catch(e){}
+    render()
+  }
+  function finish(){ active=false; try{ localStorage.setItem(KEY,'1') }catch(e){} destroy() }
+  document.addEventListener('keydown',e=>{
+    if(!active) return
+    if(e.key==='ArrowRight'||e.key==='Enter') go(1)
+    else if(e.key==='ArrowLeft') go(-1)
+    else if(e.key==='Escape') finish()
+  })
+  window.addEventListener('resize',()=>{ if(active) draw(STEPS[idx]) })
+  const btn=$('#btnTour'); if(btn) btn.onclick=()=>start(true)
+  if(!/import=/.test(location.hash)) setTimeout(()=>start(false), 800)
+})()
+</script>
+</body>
+</html>

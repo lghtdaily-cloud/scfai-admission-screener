@@ -1,0 +1,63 @@
+<view class="container">
+  <view class="card">
+    <view class="title">智能筛选引擎（五步流水线）</view>
+    <view class="subtitle">解压整理 → 解析建表 → 作品集解析 → 规则初筛 → 二轮备注；含录取率兜底。</view>
+    <button class="btn btn-primary btn-block" loading="{{running}}" bindtap="run">运行筛选</button>
+    <button class="btn btn-ghost btn-block" wx:if="{{hasResult}}" bindtap="exportAll">导出交付物 (xlsx)</button>
+  </view>
+
+  <view class="card" wx:if="{{exportFiles.length}}">
+    <view class="title">已生成交付物</view>
+    <view class="file" wx:for="{{exportFiles}}" wx:key="fileID" data-id="{{item.fileID}}" bindtap="openFile">
+      <text class="file-l">{{item.name}}</text>
+      <text class="file-open">查看</text>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{stats}}">
+    <view class="row stats">
+      <view><view class="n">{{stats.total}}</view><view class="l">总数</view></view>
+      <view><view class="n c-ok">{{stats.recommend}}</view><view class="l">推荐</view></view>
+      <view><view class="n c-warn">{{stats.pending}}</view><view class="l">待定</view></view>
+      <view><view class="n c-err">{{stats.eliminated}}</view><view class="l">淘汰</view></view>
+    </view>
+    <view class="tag tag-warning inline-tip" wx:if="{{stats.fallbackCount>0}}">触发兜底放宽 {{stats.fallbackCount}} 次</view>
+  </view>
+
+  <view class="card" wx:if="{{fallbackLog.length}}">
+    <view class="title">兜底放宽记录</view>
+    <view class="fb" wx:for="{{fallbackLog}}" wx:key="*this">· {{item}}</view>
+  </view>
+
+  <block wx:if="{{groups}}">
+    <view class="card">
+      <view class="title">推荐（{{groups.recommend.length}}）</view>
+      <view class="res" wx:for="{{groups.recommend}}" wx:key="_id">
+        <text class="res-name">{{item.name}}</text>
+        <text class="tag tag-success" wx:if="{{item.fallback}}">兜底</text>
+        <view class="res-reason">{{item.reason || item.fallbackReason || '加分项/作品集质量排序靠前'}}</view>
+      </view>
+      <view class="empty" wx:if="{{groups.recommend.length===0}}">无</view>
+    </view>
+
+    <view class="card">
+      <view class="title">待定（{{groups.pending.length}}）</view>
+      <view class="res" wx:for="{{groups.pending}}" wx:key="_id">
+        <text class="res-name">{{item.name}}</text>
+        <view class="res-reason">{{item.reason || '通过初筛但未进入前25%'}}</view>
+      </view>
+      <view class="empty" wx:if="{{groups.pending.length===0}}">无</view>
+    </view>
+
+    <view class="card">
+      <view class="title">淘汰（{{groups.eliminated.length}}）</view>
+      <view class="res" wx:for="{{groups.eliminated}}" wx:key="_id">
+        <text class="res-name">{{item.name}}</text>
+        <view class="res-reason">{{item.reason || '—'}}</view>
+      </view>
+      <view class="empty" wx:if="{{groups.eliminated.length===0}}">无</view>
+    </view>
+  </block>
+
+  <view class="empty" wx:if="{{!hasResult}}">尚未运行筛选。配置招募信息并收集材料后点击「运行筛选」。</view>
+</view>

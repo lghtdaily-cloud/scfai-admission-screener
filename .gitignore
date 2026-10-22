@@ -1,0 +1,5 @@
+node_modules/
+miniprogram/node_modules/
+web/cache/
+.DS_Store
+*.log

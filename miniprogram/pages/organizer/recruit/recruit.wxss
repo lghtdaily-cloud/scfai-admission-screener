@@ -1,0 +1,27 @@
+.block { margin-bottom: 26rpx; }
+.block-t {
+  font-size: 26rpx;
+  color: var(--text-2);
+  font-weight: 500;
+  margin-bottom: 12rpx;
+}
+
+.li { display: flex; align-items: center; margin-bottom: 12rpx; }
+.li-input {
+  flex: 1;
+  background: #fafbfc;
+  border: 1rpx solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 16rpx 18rpx;
+  font-size: 27rpx;
+}
+.li-del { padding: 0 12rpx; color: var(--muted); font-size: 28rpx; }
+.li-add { font-size: 25rpx; color: var(--primary); padding: 10rpx 0; }
+
+.map-grp {
+  font-size: 26rpx;
+  color: var(--text-2);
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid var(--line);
+}
+.map-grp:last-child { border-bottom: none; }

@@ -1,0 +1,35 @@
+<view class="container">
+  <view class="card">
+    <view class="title">查询我的提交状态</view>
+    <view class="field">
+      <view class="field-label">姓名</view>
+      <input class="field-input" value="{{name}}" data-key="name" bindinput="onInput" />
+    </view>
+    <view class="field">
+      <view class="field-label">学号</view>
+      <input class="field-input" value="{{studentId}}" data-key="studentId" bindinput="onInput" />
+    </view>
+    <button class="btn btn-primary btn-block" bindtap="query">查询</button>
+  </view>
+
+  <view class="empty" wx:if="{{notFound}}">未找到提交记录，请确认姓名/学号是否正确。</view>
+
+  <view class="card" wx:if="{{result}}">
+    <view class="row">
+      <view class="title" style="margin:0">{{result.name}}</view>
+      <view class="tag tag-muted">{{result.status || '已提交'}}</view>
+    </view>
+    <view class="divider"></view>
+    <view class="kv"><text class="muted">学号</text><text>{{result.studentId}}</text></view>
+    <view class="kv"><text class="muted">专业 / 年级</text><text>{{result.major || '-'}} / {{result.grade || '-'}}</text></view>
+    <view class="kv"><text class="muted">来源</text><text>{{result.source === 'mail' ? '邮件导入' : '小程序直传'}}</text></view>
+    <view class="kv" wx:if="{{result.screen}}">
+      <text class="muted">初筛结果</text>
+      <text class="tag {{result.screen.tier==='推荐' ? 'tag-success' : (result.screen.tier==='待定' ? 'tag-warning' : 'tag-danger')}}">{{result.screen.tier}}{{result.screen.fallback ? '（兜底）' : ''}}</text>
+    </view>
+    <view class="kv" wx:if="{{result.favorite}}">
+      <text class="muted">心仪</text><text class="tag tag-success">已标记</text>
+    </view>
+    <view class="subtitle" wx:if="{{result.screen}}" style="margin-top:12rpx">理由：{{result.screen.reason || (result.screen.fallbackReason || '—')}}</view>
+  </view>
+</view>

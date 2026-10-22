@@ -1,0 +1,6 @@
+.pf { padding: 20rpx 0; border-bottom: 2rpx solid #f3f4f6; }
+.pf:last-child { border-bottom: none; }
+.pf-name { font-size: 30rpx; font-weight: 600; }
+.pf-line { font-size: 26rpx; margin-top: 8rpx; line-height: 1.7; }
+.pf-k { display: inline-block; min-width: 76rpx; color: var(--muted); font-size: 24rpx; }
+.warn-k { color: var(--warning); }

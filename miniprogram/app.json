@@ -1,0 +1,37 @@
+{
+  "pages": [
+    "pages/student/intro/intro",
+    "pages/student/apply/apply",
+    "pages/student/status/status",
+    "pages/organizer/login/login",
+    "pages/organizer/home/home",
+    "pages/organizer/recruit/recruit",
+    "pages/organizer/import/import",
+    "pages/organizer/portfolio/portfolio",
+    "pages/organizer/candidates/candidates",
+    "pages/organizer/candidate/candidate",
+    "pages/organizer/screen/screen",
+    "pages/organizer/favorite/favorite",
+    "pages/organizer/contact/contact"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#6d5efc",
+    "navigationBarTitleText": "申请人筛选与一键联系",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f6f7f9"
+  },
+  "tabBar": {
+    "color": "#9aa1ad",
+    "selectedColor": "#6d5efc",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/student/apply/apply", "text": "学生报名" },
+      { "pagePath": "pages/organizer/home/home", "text": "主办方" }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

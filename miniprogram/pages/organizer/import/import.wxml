@@ -1,0 +1,60 @@
+<view class="container">
+  <view class="card">
+    <view class="title">导入学生报名材料</view>
+    <view class="subtitle">1 封邮件 = 1 位申请者，系统自动解压归档并标记缺失材料</view>
+
+    <view class="seg">
+      <view class="seg-item {{mode==='zip'?'on':''}}" data-mode="zip" bindtap="switchMode">压缩包导入</view>
+      <view class="seg-item {{mode==='files'?'on':''}}" data-mode="files" bindtap="switchMode">逐个上传</view>
+    </view>
+
+    <view wx:if="{{mode==='zip'}}">
+      <view class="picker" bindtap="pickZip">
+        <text class="picker-icon">📦</text>
+        <text class="picker-text">{{fileName || '选择邮件附件压缩包（zip）'}}</text>
+      </view>
+      <button class="btn btn-primary btn-block" loading="{{importing}}" bindtap="submitZip">开始导入</button>
+    </view>
+
+    <view wx:else>
+      <view class="picker" bindtap="pickFiles">
+        <text class="picker-icon">📎</text>
+        <text class="picker-text">{{picked.length ? '已选择 ' + picked.length + ' 个文件' : '选择多个材料文件'}}</text>
+      </view>
+      <view class="file-item" wx:for="{{picked}}" wx:key="name">{{item.name}}</view>
+      <button class="btn btn-primary btn-block" loading="{{importing}}" bindtap="submitFiles">开始导入</button>
+    </view>
+
+    <view class="tip" bindtap="copyTip">{{tip}}（点击复制）</view>
+  </view>
+
+  <view class="card" wx:if="{{result && result.ok}}">
+    <view class="title">导入结果</view>
+    <view class="stats-row">
+      <view class="mini"><view class="mini-n">{{result.stats.applicants}}</view><view class="mini-l">识别申请者</view></view>
+      <view class="mini"><view class="mini-n ok">{{result.stats.complete}}</view><view class="mini-l">材料齐全</view></view>
+      <view class="mini"><view class="mini-n warn">{{result.stats.incomplete}}</view><view class="mini-l">材料不齐</view></view>
+      <view class="mini"><view class="mini-n">{{result.stats.ungrouped}}</view><view class="mini-l">未识别</view></view>
+    </view>
+
+    <view class="applicant" wx:for="{{result.applicants}}" wx:key="name">
+      <view class="row">
+        <text class="ap-name">{{item.name}}</text>
+        <text class="tag {{item.complete?'tag-success':'tag-warning'}}">{{item.complete ? '齐全' : '不齐'}}</text>
+      </view>
+      <view class="ap-line muted">已收：{{item.types.join('、') || '无'}}（{{item.fileCount}} 个文件）</view>
+      <view class="ap-line" wx:if="{{item.missing.length}}" style="color:#d97706">缺失：{{item.missing.join('、')}}</view>
+      <view class="ap-line" wx:if="{{item.excludedByMaterial}}" style="color:#dc2626">缺报名表或作品集，初筛将按排除项处理</view>
+    </view>
+
+    <view class="row-btns">
+      <button class="btn btn-line flex1" bindtap="goCandidates">查看候选人库</button>
+      <button class="btn btn-primary flex1" bindtap="goScreen">去筛选</button>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{result && !result.ok}}">
+    <view class="title">导入失败</view>
+    <view class="subtitle">{{result.msg}}</view>
+  </view>
+</view>

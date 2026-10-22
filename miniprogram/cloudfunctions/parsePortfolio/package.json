@@ -1,0 +1,9 @@
+{
+  "name": "parsePortfolio",
+  "version": "1.0.0",
+  "description": "作品集解析：类别/风格/优势/短板四维度结构化概述",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

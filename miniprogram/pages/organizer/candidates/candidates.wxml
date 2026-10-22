@@ -1,0 +1,19 @@
+<view class="container">
+  <view class="card">
+    <input class="field-input" placeholder="搜索姓名 / 学号 / 专业" value="{{kw}}" bindinput="onSearch" />
+  </view>
+
+  <view class="empty" wx:if="{{list.length===0}}">暂无候选人。学生端提交或邮件导入后将在此显示。</view>
+
+  <view class="card can" wx:for="{{list}}" wx:key="_id" data-id="{{item._id}}" bindtap="tap">
+    <view class="row">
+      <view class="can-name">{{item.name}}</view>
+      <view class="tag {{item.favorite ? 'tag-success' : 'tag-muted'}}">{{item.favorite ? '⭐心仪' : '普通'}}</view>
+    </view>
+    <view class="subtitle can-sub">{{item.major || '-'}} · {{item.grade || '-'}} · {{item.studentId}}</view>
+    <view wx:if="{{item.screen}}">
+      <text class="tag {{item.screen.tier==='推荐' ? 'tag-success' : (item.screen.tier==='待定' ? 'tag-warning' : 'tag-danger')}}">{{item.screen.tier}}{{item.screen.fallback ? '（兜底）' : ''}}</text>
+    </view>
+    <view wx:else><text class="tag tag-muted">未筛选</text></view>
+  </view>
+</view>

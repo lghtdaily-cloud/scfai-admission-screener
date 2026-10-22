@@ -1,0 +1,52 @@
+<view class="container">
+  <view wx:if="{{!c}}" class="card">
+    <view class="title">一键联系</view>
+    <view class="subtitle">请从「候选人详情」点击「一键联系」进入，对指定候选者发起录取沟通。</view>
+  </view>
+
+  <block wx:if="{{c}}">
+    <view class="card">
+      <view class="title">{{c.name}} · 录取文案</view>
+      <view class="subtitle">支持变量：{姓名} {活动名称}（发送前请确认脱敏与内容）。</view>
+      <textarea class="field-textarea" style="height:300rpx" value="{{template}}" bindinput="onTpl"></textarea>
+      <button class="btn btn-ghost btn-block" bindtap="callGen">用服务端生成</button>
+    </view>
+
+    <view class="card">
+      <view class="title">预览</view>
+      <view class="preview">{{filled}}</view>
+      <button class="btn btn-line btn-block" bindtap="copyText">复制完整文案</button>
+    </view>
+
+    <view class="card">
+      <view class="title">一键联系通道</view>
+
+      <view class="ch">
+        <view class="ch-l">
+          <view class="ch-t">📧 QQ 邮箱</view>
+          <view class="ch-d">收件人：{{c.email}}</view>
+        </view>
+        <view class="ch-btns">
+          <button class="mini-btn" size="mini" bindtap="copyEmail">复制收件人</button>
+          <button class="mini-btn" size="mini" bindtap="openQQMail">去写信</button>
+        </view>
+      </view>
+
+      <view class="ch">
+        <view class="ch-l">
+          <view class="ch-t">📞 电话</view>
+          <view class="ch-d">真实号码：{{c.phone}}（脱敏 {{maskedPhone}}）</view>
+        </view>
+        <button class="mini-btn" size="mini" bindtap="call">拨打</button>
+      </view>
+
+      <view class="ch">
+        <view class="ch-l">
+          <view class="ch-t">💬 微信</view>
+          <view class="ch-d">微信号：{{c.wechat || '未提供'}}</view>
+        </view>
+        <button class="mini-btn" size="mini" bindtap="copyWechat">复制</button>
+      </view>
+    </view>
+  </block>
+</view>

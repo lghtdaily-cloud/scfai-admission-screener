@@ -1,0 +1,9 @@
+.inline-tip { display: inline-block; margin-top: 12rpx; }
+.inline-tip { display: inline-block; margin-top: 12rpx; }
+
+.fb { font-size: 25rpx; color: var(--warning); padding: 6rpx 0; }
+
+.res { padding: 18rpx 0; border-bottom: 1rpx solid var(--line); }
+.res:last-child { border-bottom: none; }
+.res-name { font-size: 28rpx; font-weight: 500; margin-right: 10rpx; }
+.res-reason { font-size: 24rpx; color: var(--muted); margin-top: 4rpx; line-height: 1.6; }

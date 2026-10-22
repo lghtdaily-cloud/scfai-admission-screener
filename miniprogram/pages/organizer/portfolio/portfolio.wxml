@@ -1,0 +1,25 @@
+<view class="container">
+  <view class="card">
+    <view class="title">作品集解析</view>
+    <view class="subtitle">输出类别 / 风格 / 优势 / 短板四维度概述，并入候选人信息总表</view>
+    <button class="btn btn-primary btn-block" loading="{{running}}" bindtap="runAll">解析全部作品集</button>
+    <view class="muted" style="font-size:24rpx;margin-top:16rpx" wx:if="{{engine}}">当前引擎：{{engine}}　本次解析 {{parsed}} 份</view>
+    <view class="muted" style="font-size:24rpx;margin-top:8rpx">未配置 LLM 时使用确定性规则引擎（关键词词典 + 原文证据）；配置后自动升级为大模型解析。</view>
+  </view>
+
+  <view class="card" wx:if="{{list.length}}">
+    <view class="title">解析结果（{{list.length}}）</view>
+    <view class="pf" wx:for="{{list}}" wx:key="_id">
+      <view class="row">
+        <text class="pf-name">{{item.name}}</text>
+        <text class="tag tag-muted">{{item.source}}</text>
+      </view>
+      <view class="pf-line"><text class="pf-k">类别</text>{{item.category}}</view>
+      <view class="pf-line"><text class="pf-k">风格</text>{{item.style}}</view>
+      <view class="pf-line" wx:if="{{item.advantage}}"><text class="pf-k">优势</text>{{item.advantage}}</view>
+      <view class="pf-line" wx:if="{{item.weakness}}"><text class="pf-k warn-k">短板</text>{{item.weakness}}</view>
+    </view>
+  </view>
+
+  <view class="empty" wx:else>暂无解析结果，点击上方按钮开始</view>
+</view>

@@ -1,0 +1,50 @@
+<view class="container">
+  <view class="card stats">
+    <view class="stat"><view class="stat-n">{{total}}</view><view class="stat-l">候选总人数</view></view>
+    <view class="stat"><view class="stat-n c-ok">{{recommend}}</view><view class="stat-l">推荐</view></view>
+    <view class="stat"><view class="stat-n c-warn">{{pending}}</view><view class="stat-l">待定</view></view>
+    <view class="stat"><view class="stat-n c-err">{{eliminated}}</view><view class="stat-l">淘汰</view></view>
+    <view class="stat"><view class="stat-n c-primary">{{favorite}}</view><view class="stat-l">心仪</view></view>
+  </view>
+
+  <view class="tag tag-warning inline-tip" wx:if="{{!hasRecruit}}">尚未上传招募信息，建议先配置筛选标准</view>
+
+  <!-- 一键操作（醒目） -->
+  <view class="quick">
+    <view class="quick-card quick-main" data-url="/pages/organizer/screen/screen" bindtap="go">
+      <view class="quick-emoji">🔍</view>
+      <view class="quick-t">一键智能筛选</view>
+      <view class="quick-d">导入材料 → 多元评价 → 输出推荐名单</view>
+    </view>
+    <view class="quick-sub">
+      <view class="quick-card quick-side" data-url="/pages/organizer/import/import" bindtap="go">
+        <view class="quick-emoji">📥</view>
+        <view class="quick-t2">一键导入邮件</view>
+      </view>
+      <view class="quick-card quick-side" data-url="/pages/organizer/candidates/candidates" bindtap="go">
+        <view class="quick-emoji">👥</view>
+        <view class="quick-t2">候选人库</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="title">🔔 新报名提醒（订阅消息）</view>
+    <view class="hint">开启后，学生一提交报名，你的微信就会收到一条「有新的报名」通知，点开直达候选人库 —— 不用再向学生要提交码。</view>
+    <view class="notify-row">
+      <text class="notify-state {{notifyOn ? 'on' : 'off'}}">{{notifyOn ? '已开启 · 剩余 ' + notifyCount + ' 条' : '未开启'}}</text>
+      <button class="btn-primary" size="mini" bindtap="enableNotify">开启 / 续期提醒</button>
+    </view>
+    <view class="hint" wx:if="{{!tplId}}">提示：还没配置订阅消息模板 ID（config/env.js → SUBSCRIBE.TEMPLATE_ID），开启按钮会提示你去配置。</view>
+    <view class="hint" wx:if="{{notifyOn && notifyCount < 3}}">剩余条数偏少：一次性订阅每授权一次可推一条，可再点一次「开启 / 续期提醒」累积。</view>
+  </view>
+
+  <view class="card">
+    <view class="title">功能导航</view>
+    <view class="menu" wx:for="{{menus}}" wx:key="label" data-url="{{item.url}}" bindtap="go">
+      <text class="menu-icon">{{item.icon}}</text>
+      <text class="menu-label">{{item.label}}</text>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+</view>

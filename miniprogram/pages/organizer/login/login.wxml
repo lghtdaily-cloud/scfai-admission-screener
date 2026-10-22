@@ -1,0 +1,14 @@
+<view class="container">
+  <view class="card" style="text-align:center;padding-top:60rpx">
+    <view class="brand">主办方后台</view>
+    <view class="subtitle">请输入管理口令进入</view>
+  </view>
+  <view class="card">
+    <view class="field">
+      <view class="field-label">管理口令</view>
+      <input class="field-input" password value="{{pass}}" bindinput="onInput" placeholder="默认 admin888" />
+    </view>
+    <view class="tag tag-danger" wx:if="{{err}}" style="display:inline-block">{{err}}</view>
+    <button class="btn btn-primary btn-block" bindtap="login">进入</button>
+  </view>
+</view>

@@ -1,0 +1,9 @@
+{
+  "name": "screenPipeline",
+  "version": "1.0.0",
+  "description": "五步流水线智能筛选引擎",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

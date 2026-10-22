@@ -1,0 +1,10 @@
+{
+  "name": "exportXlsx",
+  "version": "1.0.0",
+  "description": "导出筛选交付物 xlsx",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "exceljs": "^4.3.0"
+  }
+}

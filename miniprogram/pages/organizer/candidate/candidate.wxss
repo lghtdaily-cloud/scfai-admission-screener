@@ -1,0 +1,2 @@
+.btn-flex { flex: 1; }
+.txt { white-space: pre-wrap; }
